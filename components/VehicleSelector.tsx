@@ -38,17 +38,23 @@ export const VehicleSelector: React.FC<VehicleSelectorProps> = ({
       // The templateUrl is already set to /templates/{model}/template.png
       const localPath = vehicle.templateUrl;
       
+      console.log(`Loading vehicle template from: ${localPath}`);
+      
       // Convert local image to base64
       const base64Image = await urlToBase64(localPath);
 
-      if (!base64Image) {
-        throw new Error('Failed to load template');
+      if (!base64Image || base64Image.length === 0) {
+        throw new Error('Failed to load template: empty base64 data');
       }
 
+      console.log(`Successfully loaded template for ${vehicle.name}, base64 length: ${base64Image.length}`);
+      
       onVehicleSelect(base64Image, vehicle);
       setLoadingVehicle(null);
     } catch (err: any) {
       console.error('Error loading vehicle template:', err);
+      console.error('Vehicle:', vehicle);
+      console.error('Template URL:', vehicle.templateUrl);
       setError(err.message || t('main.failedToLoadTemplate'));
       setLoadingVehicle(null);
     }

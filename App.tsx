@@ -4,7 +4,7 @@ import { PromptInput } from './components/PromptInput';
 import { Button } from './components/Button';
 import { SEO } from './components/SEO';
 import { VehicleSelector } from './components/VehicleSelector';
-import { fileToBase64 } from './utils/image';
+import { fileToBase64, base64ToDataUrl } from './utils/image';
 import { generateWrapDesign } from './services/deepseekService';
 import { AppState } from './types';
 import { VehicleModel } from './types/vehicle';
@@ -234,7 +234,7 @@ function App() {
                   {originalImage ? (
                     <div className={`relative w-full rounded overflow-hidden flex items-center justify-center ${isDark ? 'bg-black' : 'bg-zinc-200'}`} style={{ minHeight: '200px', maxHeight: '400px' }}>
                         <img 
-                          src={`data:image/png;base64,${originalImage.includes('base64,') ? originalImage.split('base64,')[1] : originalImage}`} 
+                          src={base64ToDataUrl(originalImage)} 
                           className="object-contain opacity-80 group-hover:opacity-100 transition-opacity p-2" 
                           alt="Tesla vehicle wrap template preview - Custom wrap design template"
                           style={{ 
@@ -411,7 +411,7 @@ function App() {
                     ) : originalImage ? (
                       <div className="w-full h-full flex items-center justify-center">
                         <img 
-                          src={`data:image/png;base64,${originalImage.includes('base64,') ? originalImage.split('base64,')[1] : originalImage}`} 
+                          src={base64ToDataUrl(originalImage)} 
                           alt="Tesla vehicle wrap template - Base template for custom wrap design" 
                           className="object-contain opacity-40 grayscale blur-[0.5px]"
                           style={{ 
@@ -427,7 +427,7 @@ function App() {
                 ) : (
                   // 3D View Mode
                   <div className="w-full h-full relative z-10">
-                    <ThreeDPreview textureUrl={generatedImage || (originalImage ? `data:image/png;base64,${originalImage.includes('base64,') ? originalImage.split('base64,')[1] : originalImage}` : null)} />
+                    <ThreeDPreview textureUrl={generatedImage || (originalImage ? base64ToDataUrl(originalImage) : null)} />
                     {!generatedImage && !originalImage && (
                       <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                         <div className={`backdrop-blur px-6 py-3 rounded border ${
