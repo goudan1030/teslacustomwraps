@@ -12,27 +12,38 @@ export const generateWrapDesign = async (
   userPrompt: string
 ): Promise<string> => {
   try {
+    // Debug: Check if API keys are loaded
+    console.log('Free Image Service - Checking API keys:');
+    console.log('HUGGINGFACE_API_KEY:', HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : 'NOT SET');
+    console.log('REPLICATE_API_TOKEN:', REPLICATE_API_TOKEN ? `${REPLICATE_API_TOKEN.substring(0, 10)}...` : 'NOT SET');
+    
     // Try Hugging Face first (completely free for some models)
-    if (HUGGINGFACE_API_KEY) {
+    if (HUGGINGFACE_API_KEY && HUGGINGFACE_API_KEY.trim() !== '') {
+      console.log('Attempting Hugging Face image generation...');
       try {
         return await generateWithHuggingFace(imageBase64, userPrompt);
       } catch (error) {
         console.warn('Hugging Face failed, trying Replicate:', error);
         // Fall through to Replicate
       }
+    } else {
+      console.warn('Hugging Face API key not found or empty');
     }
 
     // Try Replicate as fallback (has free tier)
-    if (REPLICATE_API_TOKEN) {
+    if (REPLICATE_API_TOKEN && REPLICATE_API_TOKEN.trim() !== '') {
+      console.log('Attempting Replicate image generation...');
       try {
         return await generateWithReplicate(imageBase64, userPrompt);
       } catch (error) {
         console.warn('Replicate failed:', error);
       }
+    } else {
+      console.warn('Replicate API token not found or empty');
     }
 
     // If no API keys provided, throw helpful error
-    throw new Error('未配置免费API服务。请配置以下任一服务：\n\n1. Hugging Face (完全免费):\n   访问 https://huggingface.co/settings/tokens 获取Token\n   在.env.local中添加: VITE_HUGGINGFACE_API_KEY=your_token\n\n2. Replicate (免费额度):\n   访问 https://replicate.com/account/api-tokens 获取Token\n   在.env.local中添加: VITE_REPLICATE_API_TOKEN=your_token\n\n或者等待Gemini API速率限制解除后再试。');
+    throw new Error('未配置免费API服务。请配置以下任一服务：\n\n1. Hugging Face (完全免费):\n   访问 https://huggingface.co/settings/tokens 获取Token\n   在.env.local中添加: VITE_HUGGINGFACE_API_KEY=your_token\n   当前状态: ' + (HUGGINGFACE_API_KEY ? '已配置但未加载，请重启服务器' : '未配置') + '\n\n2. Replicate (免费额度):\n   访问 https://replicate.com/account/api-tokens 获取Token\n   在.env.local中添加: VITE_REPLICATE_API_TOKEN=your_token\n\n或者等待Gemini API速率限制解除后再试。\n\n提示：如果已配置但未生效，请重启开发服务器（npm run dev）');
 
   } catch (error: any) {
     console.error("Free Image Service Error:", error);

@@ -14,7 +14,8 @@ export const generateWrapDesign = async (
     }
 
     // Try models in order: Flash (faster) -> Pro (more capable)
-    const models = ['gemini-1.5-flash', 'gemini-1.5-pro'];
+    // Note: Model names may vary, try common variations
+    const models = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'];
     
     let lastError: Error | null = null;
     
