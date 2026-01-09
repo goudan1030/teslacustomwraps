@@ -17,7 +17,8 @@ Google Gemini提供强大的多模态AI能力，支持图片分析和生成，�
 
 **配置：**
 ```env
-VITE_GEMINI_API_KEY=AIzaSyCX8c3oXCNm7O3xJDgaDa7kHHJkPdxk1Cc
+# 项目专用的Gemini API Key (tesla项目)
+VITE_GEMINI_API_KEY=AIzaSyC1h2uv2unqeJmrwtZmppkz8tDE-RRlYgY
 ```
 
 **优点：**
@@ -130,7 +131,8 @@ VITE_OPENAI_API_KEY=your_openai_api_key_here
 
 ```env
 # 免费选项（推荐：至少配置一个）
-VITE_GEMINI_API_KEY=AIzaSyCX8c3oXCNm7O3xJDgaDa7kHHJkPdxk1Cc
+# 项目专用的Gemini API Key (tesla项目, Project: 917722245090)
+VITE_GEMINI_API_KEY=AIzaSyC1h2uv2unqeJmrwtZmppkz8tDE-RRlYgY
 # 或者
 VITE_HUGGINGFACE_API_KEY=hf_xxxxxxxxxxxxx
 # 或者
@@ -150,13 +152,15 @@ VITE_GOOGLE_CLIENT_ID=your_google_client_id
 
 **完全免费（推荐）：**
 ```env
-VITE_GEMINI_API_KEY=AIzaSyCX8c3oXCNm7O3xJDgaDa7kHHJkPdxk1Cc
+# 项目专用的Gemini API Key (tesla项目)
+VITE_GEMINI_API_KEY=AIzaSyC1h2uv2unqeJmrwtZmppkz8tDE-RRlYgY
 ```
 
 **最佳体验（Gemini + 备用）：**
 ```env
 # 主要使用Gemini（免费，多模态能力强）
-VITE_GEMINI_API_KEY=AIzaSyCX8c3oXCNm7O3xJDgaDa7kHHJkPdxk1Cc
+# 项目专用的Gemini API Key (tesla项目, Project: 917722245090)
+VITE_GEMINI_API_KEY=AIzaSyC1h2uv2unqeJmrwtZmppkz8tDE-RRlYgY
 # OpenAI作为备用（付费）
 VITE_OPENAI_API_KEY=your_openai_key
 # 免费服务作为最后备用
