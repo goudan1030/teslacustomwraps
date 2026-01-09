@@ -3,7 +3,8 @@
 
 // Get API keys from environment - check both possible sources
 const HUGGINGFACE_API_KEY = (import.meta.env.VITE_HUGGINGFACE_API_KEY || '').trim();
-const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models';
+// Hugging Face has changed their API endpoint - use the new router endpoint
+const HUGGINGFACE_API_URL = 'https://router.huggingface.co';
 
 // Fallback to Replicate if Hugging Face fails (also has free tier)
 const REPLICATE_API_TOKEN = (import.meta.env.VITE_REPLICATE_API_TOKEN || '').trim();
@@ -55,7 +56,7 @@ export const generateWrapDesign = async (
     }
 
     // If no API keys provided, throw helpful error
-    throw new Error('未配置免费API服务。请配置以下任一服务：\n\n1. Hugging Face (完全免费):\n   访问 https://huggingface.co/settings/tokens 获取Token\n   在.env.local中添加: VITE_HUGGINGFACE_API_KEY=your_token\n   当前状态: ' + (HUGGINGFACE_API_KEY ? '已配置但未加载，请重启服务器' : '未配置') + '\n\n2. Replicate (免费额度):\n   访问 https://replicate.com/account/api-tokens 获取Token\n   在.env.local中添加: VITE_REPLICATE_API_TOKEN=your_token\n\n或者等待Gemini API速率限制解除后再试。\n\n提示：如果已配置但未生效，请重启开发服务器（npm run dev）');
+    throw new Error(`所有AI服务都无法使用。\n\n当前状态：\n- Hugging Face: ${HUGGINGFACE_API_KEY ? 'API Key已配置，但所有模型都不可用(410错误)' : '未配置'}\n- Replicate: ${REPLICATE_API_TOKEN ? '已配置' : '未配置'}\n- Gemini: 模型不存在(404错误)\n\n建议：\n1. 等待一段时间后重试（可能是临时服务问题）\n2. 或者配置OpenAI API（付费但稳定）\n3. 检查网络连接是否正常`);
 
   } catch (error: any) {
     console.error("Free Image Service Error:", error);
@@ -68,11 +69,36 @@ const generateWithHuggingFace = async (
   imageBase64: string,
   userPrompt: string
 ): Promise<string> => {
-  // Use the most stable and commonly available model
-  // runwayml/stable-diffusion-v1-5 is the most reliable
-  const model = 'runwayml/stable-diffusion-v1-5';
+  // Try multiple models, starting with the most commonly available
+  const models = [
+    'stabilityai/stable-diffusion-2-1',
+    'CompVis/stable-diffusion-v1-4',
+    'runwayml/stable-diffusion-v1-5',
+    'stabilityai/stable-diffusion-xl-base-1.0'
+  ];
   
-  return await tryHuggingFaceModel(model, imageBase64, userPrompt);
+  let lastError: Error | null = null;
+  
+  for (const model of models) {
+    try {
+      console.log(`Trying Hugging Face model: ${model}`);
+      return await tryHuggingFaceModel(model, imageBase64, userPrompt);
+    } catch (error: any) {
+      console.warn(`Model ${model} failed:`, error.message);
+      lastError = error;
+      // If 410 or 404, try next model
+      if (error.response?.status === 410 || error.response?.status === 404 || 
+          error.message?.includes('410') || error.message?.includes('404') || 
+          error.message?.includes('not available') || error.message?.includes('Gone')) {
+        continue; // Try next model
+      }
+      // Other errors (like 503, 401), throw immediately
+      throw error;
+    }
+  }
+  
+  // All models failed
+  throw lastError || new Error('所有Hugging Face模型都不可用。请稍后重试或使用其他AI服务。');
 };
 
 const tryHuggingFaceModel = async (
@@ -87,6 +113,7 @@ clean production-ready layout, high quality, detailed design, vector art style.`
 
   // Use Vite proxy to avoid CORS issues
   // The proxy is configured in vite.config.ts
+  // New Hugging Face router API endpoint
   const proxyUrl = `/api/huggingface/models/${model}`;
   
   console.log('Calling Hugging Face via proxy:', proxyUrl);
@@ -112,25 +139,28 @@ clean production-ready layout, high quality, detailed design, vector art style.`
   });
 
   if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    
     // Handle different error statuses
     if (response.status === 503) {
       // Model is loading, wait and retry
-      const data = await response.json().catch(() => ({}));
-      const estimatedTime = data.estimated_time || 20;
+      const estimatedTime = errorData.estimated_time || 20;
       console.log(`Model ${model} is loading, waiting ${estimatedTime}s...`);
       await new Promise(resolve => setTimeout(resolve, Math.min(estimatedTime * 1000, 30000))); // Max 30s
       return tryHuggingFaceModel(model, imageBase64, userPrompt); // Retry same model
     }
     
     if (response.status === 410 || response.status === 404) {
-      // Model not found or removed, try alternative
-      console.warn(`Model ${model} not available (${response.status}), trying alternative...`);
-      throw new Error(`Model ${model} not available. Please try a different model.`);
+      // Model not found or removed, return error with status to trigger next model
+      const error: any = new Error(`Model ${model} not available (${response.status})`);
+      error.response = response;
+      throw error;
     }
     
-    const errorData = await response.json().catch(() => ({}));
     const errorMsg = errorData.error || errorData.message || `Hugging Face API error: ${response.status}`;
-    throw new Error(errorMsg);
+    const error: any = new Error(errorMsg);
+    error.response = response;
+    throw error;
   }
 
   const blob = await response.blob();

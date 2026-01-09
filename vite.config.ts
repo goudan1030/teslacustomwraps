@@ -10,8 +10,9 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         proxy: {
           // Proxy Hugging Face API to avoid CORS issues
+          // Note: Hugging Face now uses router.huggingface.co instead of api-inference.huggingface.co
           '/api/huggingface': {
-            target: 'https://api-inference.huggingface.co',
+            target: 'https://router.huggingface.co',
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/api\/huggingface/, ''),
             configure: (proxy, _options) => {

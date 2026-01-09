@@ -15,10 +15,13 @@ export const generateWrapDesign = async (
 
     // Try models in order: Use correct Gemini API model names
     // Based on Google's Gemini API documentation
+    // Note: Gemini API doesn't actually support image generation, only text/image analysis
+    // These models can analyze images but can't generate new images
     const models = [
-      'gemini-1.5-flash',  // Most common and stable
-      'gemini-1.5-pro',    // More capable version
-      'gemini-pro'         // Legacy name
+      'gemini-1.5-flash',      // Latest flash model
+      'gemini-1.5-pro',        // Latest pro model  
+      'gemini-pro-vision',     // Vision-enabled version (legacy)
+      'gemini-pro'             // Legacy name
     ];
     
     let lastError: Error | null = null;
@@ -84,9 +87,11 @@ export const generateWrapDesign = async (
           }
         }
 
-        // Gemini doesn't generate images, return original template
-        // TODO: Use Gemini's text output with another image generation service
-        console.warn('Gemini API does not support direct image generation. It can analyze images but returns text descriptions.');
+        // IMPORTANT: Gemini API does NOT support image generation
+        // It can only analyze images and return text descriptions
+        // We return the original image as-is, since Gemini cannot generate new images
+        console.warn('Gemini API不支持图像生成，只能分析图像并返回文本描述。返回原始模板图片。');
+        console.warn('如需生成新图像，请使用Hugging Face、Replicate或OpenAI服务。');
         return `data:image/png;base64,${imageBase64}`;
         
       } catch (error: any) {

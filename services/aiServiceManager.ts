@@ -19,14 +19,19 @@ export const generateWrapDesign = async (
 
   // Auto mode: try providers in order of preference
   if (provider === 'auto') {
-    // Priority order: Gemini (free) -> OpenAI (paid) -> Free services
-    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (geminiKey) {
+    // Note: Gemini API doesn't support image generation, skip it
+    // Priority order: Free services (Hugging Face/Replicate) -> OpenAI (paid) -> Gemini (text only, skip)
+    
+    // Try free services first (Hugging Face/Replicate)
+    const huggingfaceKey = import.meta.env.VITE_HUGGINGFACE_API_KEY;
+    const replicateKey = import.meta.env.VITE_REPLICATE_API_TOKEN;
+    
+    if (huggingfaceKey || replicateKey) {
       try {
-        console.log('Attempting Google Gemini...');
-        return await generateWithGemini(imageBase64, userPrompt);
+        console.log('Attempting free image generation service (Hugging Face/Replicate)...');
+        return await generateWithFree(imageBase64, userPrompt);
       } catch (error) {
-        console.warn('Gemini failed, trying next provider:', error);
+        console.warn('Free service failed, trying OpenAI:', error);
       }
     }
 
@@ -37,13 +42,23 @@ export const generateWrapDesign = async (
         console.log('Attempting OpenAI...');
         return await generateWithOpenAI(imageBase64, userPrompt);
       } catch (error) {
-        console.warn('OpenAI failed, trying free service:', error);
+        console.warn('OpenAI failed:', error);
       }
     }
 
-    // Fallback to free service
-    console.log('Using free service (Hugging Face/Replicate)...');
-    return await generateWithFree(imageBase64, userPrompt);
+    // Last resort: Try Gemini (though it doesn't generate images)
+    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (geminiKey) {
+      try {
+        console.log('Attempting Google Gemini (may not support image generation)...');
+        return await generateWithGemini(imageBase64, userPrompt);
+      } catch (error) {
+        console.warn('Gemini failed:', error);
+      }
+    }
+
+    // All services failed
+    throw new Error('所有AI服务都不可用。请配置至少一个可用的AI服务（Hugging Face、Replicate或OpenAI）。');
   }
 
   // Explicit provider selection
