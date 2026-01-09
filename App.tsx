@@ -6,7 +6,7 @@ import { Button } from './components/Button';
 import { SEO } from './components/SEO';
 import { VehicleSelector } from './components/VehicleSelector';
 import { fileToBase64, base64ToDataUrl } from './utils/image';
-import { generateWrapDesign } from './services/deepseekService';
+import { generateWrapDesign } from './services/openaiService';
 import { AppState } from './types';
 import { VehicleModel } from './types/vehicle';
 import { ThreeDPreview } from './components/ThreeDPreview';

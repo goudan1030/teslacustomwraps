@@ -5,7 +5,7 @@ export const translations = {
     // Header
     header: {
       title: 'Tesla Custom Wraps',
-      poweredBy: 'Powered by DeepSeek AI'
+      poweredBy: 'Powered by OpenAI'
     },
     // Main content
     main: {
@@ -57,7 +57,7 @@ export const translations = {
       templates: 'Templates',
       teslaOfficial: 'Tesla Official',
       about: 'About',
-      poweredBy: 'Powered by DeepSeek AI',
+      poweredBy: 'Powered by OpenAI',
       aiPowered: 'AI-Powered Design',
       allRightsReserved: 'All rights reserved.',
       privacy: 'Privacy Policy',
@@ -68,7 +68,7 @@ export const translations = {
     // Header
     header: {
       title: 'Tesla Custom Wraps',
-      poweredBy: '由 DeepSeek AI 驱动'
+      poweredBy: '由 OpenAI 驱动'
     },
     // Main content
     main: {
@@ -120,7 +120,7 @@ export const translations = {
       templates: '模板库',
       teslaOfficial: 'Tesla官网',
       about: '关于',
-      poweredBy: '由 DeepSeek AI 驱动',
+      poweredBy: '由 OpenAI 驱动',
       aiPowered: 'AI驱动设计',
       allRightsReserved: '版权所有。',
       privacy: '隐私政策',
