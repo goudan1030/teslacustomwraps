@@ -45,13 +45,21 @@ Hugging Face提供免费的Stable Diffusion模型推理API。
 1. 访问 https://huggingface.co/
 2. 注册/登录账号（免费）
 3. 访问 https://huggingface.co/settings/tokens
-4. 创建新的Access Token
-5. 复制Token到 `.env.local` 文件
+4. 选择 **"Fine-grained"** 标签
+5. 输入 Token name（例如：`tesla-custom-wraps`）
+6. **重要：勾选以下权限**
+   - ✅ User permissions → Inference → **"Make calls to Inference Providers"**
+   - ✅ User permissions → Inference → **"Make calls to your Inference Endpoints"**（可选）
+7. 点击 **"Create token"** 按钮
+8. **立即复制Token**（创建后无法再次查看）
+9. 将Token添加到 `.env.local` 文件
 
 **配置：**
 ```env
-VITE_HUGGINGFACE_API_KEY=your_huggingface_token_here
+VITE_HUGGINGFACE_API_KEY=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
+
+**详细配置步骤请查看：** `docs/HUGGINGFACE_SETUP.md`
 
 **优点：**
 - ✅ 完全免费
