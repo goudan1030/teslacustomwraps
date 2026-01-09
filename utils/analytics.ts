@@ -1,6 +1,7 @@
 // Google Analytics utility
 
-const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || '';
+// Use environment variable if provided, otherwise use default GA ID
+const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID || 'G-LJLJZMLN6G';
 
 declare global {
   interface Window {
@@ -10,36 +11,32 @@ declare global {
 }
 
 export const initGA = () => {
-  if (!GA_MEASUREMENT_ID) {
-    console.warn('Google Analytics Measurement ID not configured');
-    return;
+  // GA script is already loaded in index.html, so we just ensure gtag function exists
+  if (typeof window.gtag === 'undefined') {
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(...args: any[]) {
+      window.dataLayer.push(args);
+    };
   }
 
-  // Initialize dataLayer
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function(...args: any[]) {
-    window.dataLayer.push(args);
-  };
-
-  // Load Google Analytics script
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-  document.head.appendChild(script);
-
-  // Configure gtag
-  window.gtag('js', new Date());
-  window.gtag('config', GA_MEASUREMENT_ID, {
-    page_path: window.location.pathname,
-  });
+  // Track initial page view if GA is already configured
+  // Note: GA is already initialized in index.html, so we just track the page view
+  if (window.gtag && GA_MEASUREMENT_ID) {
+    // Additional configuration if needed
+    window.gtag('config', GA_MEASUREMENT_ID, {
+      page_path: window.location.pathname,
+      page_title: document.title,
+    });
+  }
 
   // Track page views on route changes
   let lastPath = window.location.pathname;
   setInterval(() => {
-    if (window.location.pathname !== lastPath) {
+    if (window.location.pathname !== lastPath && window.gtag && GA_MEASUREMENT_ID) {
       lastPath = window.location.pathname;
       window.gtag('config', GA_MEASUREMENT_ID, {
         page_path: lastPath,
+        page_title: document.title,
       });
     }
   }, 100);

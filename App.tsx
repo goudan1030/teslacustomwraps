@@ -2,9 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Header } from './components/Header';
 import { PromptInput } from './components/PromptInput';
 import { Button } from './components/Button';
+import { SEO } from './components/SEO';
+import { VehicleSelector } from './components/VehicleSelector';
 import { fileToBase64 } from './utils/image';
-import { generateWrapDesign } from './services/geminiService';
+import { generateWrapDesign } from './services/deepseekService';
 import { AppState } from './types';
+import { VehicleModel } from './types/vehicle';
 import { ThreeDPreview } from './components/ThreeDPreview';
 import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
@@ -41,7 +44,7 @@ const DownloadIcon = () => (
 
 function App() {
   const { theme } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { isAuthenticated } = useAuth();
   
   const [prompt, setPrompt] = useState('USA police car theme, high contrast black and white, sleek modern typography');
@@ -50,6 +53,9 @@ function App() {
   const [state, setState] = useState<AppState>(AppState.IDLE);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'2D' | '3D'>('2D');
+  const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<VehicleModel | null>(null);
+  const [uploadMode, setUploadMode] = useState<'select' | 'upload'>('select'); // 'select' for vehicle selection, 'upload' for file upload
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -70,11 +76,23 @@ function App() {
       setGeneratedImage(null);
       setState(AppState.IDLE);
       setErrorMsg(null);
+      setSelectedVehicleId(null);
+      setSelectedVehicle(null);
     } catch (e) {
       console.error(e);
       setErrorMsg(t('main.failedToProcessImage'));
       trackEvent('error', 'file_upload', 'failed_to_process');
     }
+  };
+
+  const handleVehicleSelect = (base64Image: string, vehicle: VehicleModel) => {
+    setOriginalImage(base64Image);
+    setGeneratedImage(null);
+    setState(AppState.IDLE);
+    setErrorMsg(null);
+    setSelectedVehicleId(vehicle.id);
+    setSelectedVehicle(vehicle);
+    trackEvent('vehicle_select', 'user_action', vehicle.id);
   };
 
   const handleGenerate = async () => {
@@ -119,80 +137,140 @@ function App() {
   const isDark = theme === 'dark';
 
   return (
-    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'} font-light transition-colors duration-300`}>
-      <Header />
+    <>
+      <SEO 
+        title="Tesla Custom Wraps - AI-Powered Vehicle Wrap Design | Professional Car Wrap Generator"
+        description="Create stunning custom Tesla wraps with AI-powered design technology. Professional vehicle wrap designer with 2D and 3D preview. Design your dream Tesla wrap today."
+        keywords="tesla custom wraps, tesla wrap design, car wrap designer, vehicle wrap, AI wrap design, custom car wrap, tesla wrap generator, professional wrap design, 3D wrap preview"
+      />
+      <div className={`min-h-screen flex flex-col ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'} font-light transition-colors duration-300`}>
+        <Header />
 
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 h-full">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 h-[calc(100vh-12rem)] lg:h-[calc(100vh-10rem)]">
           
           {/* Left Column: Controls - Fixed alignment */}
-          <div className="lg:col-span-4 flex flex-col">
-            <div className="space-y-8 flex-shrink-0">
-              <div className="space-y-6">
+          <div className="lg:col-span-4 flex flex-col overflow-y-auto">
+            <div className="space-y-6 lg:space-y-8 flex-shrink-0 pr-2">
+              <header className="space-y-6">
                 <h1 className={`text-3xl font-semibold tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
                   {t('main.title')}
                 </h1>
                 <p className={`font-light leading-relaxed ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
                   {t('main.description')}
                 </p>
-              </div>
+              </header>
 
               <hr className={isDark ? 'border-zinc-800' : 'border-zinc-300'} />
               
               {/* Step 1: Upload */}
-              <div className="space-y-4">
-                <h2 className={`text-sm font-semibold tracking-widest uppercase flex items-center gap-3 ${isDark ? 'text-white' : 'text-black'}`}>
-                  <span className={`flex items-center justify-center w-5 h-5 rounded-full border ${isDark ? 'border-white' : 'border-black'} text-[10px]`}>1</span>
+              <section className="space-y-4" aria-labelledby="upload-section">
+                <h2 id="upload-section" className={`text-sm font-semibold tracking-widest uppercase flex items-center gap-3 ${isDark ? 'text-white' : 'text-black'}`}>
+                  <span className={`flex items-center justify-center w-5 h-5 rounded-full border ${isDark ? 'border-white' : 'border-black'} text-[10px]`} aria-hidden="true">1</span>
                   {t('main.uploadTemplate')}
                 </h2>
                 
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`group relative border rounded p-8 text-center transition-all duration-300 cursor-pointer overflow-hidden ${
-                    isDark 
-                      ? 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600 hover:bg-zinc-900/60' 
-                      : 'border-zinc-300 bg-zinc-100/50 hover:border-zinc-400 hover:bg-zinc-200/60'
-                  }`}
-                >
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                  />
-                  
-                  {originalImage ? (
-                    <div className={`relative aspect-video w-full rounded overflow-hidden ${isDark ? 'bg-black' : 'bg-zinc-200'}`}>
-                      <img 
-                        src={`data:image/png;base64,${originalImage.includes('base64,') ? originalImage.split('base64,')[1] : originalImage}`} 
-                        className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity" 
-                        alt="Preview" 
-                      />
-                      <div className={`absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'bg-black/40' : 'bg-white/60'}`}>
-                        <span className={`text-sm font-medium tracking-wide uppercase ${isDark ? 'text-white' : 'text-black'}`}>
-                          {t('main.replaceImage')}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center py-4">
-                      <UploadIcon />
-                      <p className={isDark ? 'text-zinc-300' : 'text-zinc-700'}>
-                        {t('main.selectVehicleTemplate')}
-                      </p>
-                      <p className={`text-xs mt-2 uppercase tracking-wide ${isDark ? 'text-zinc-600' : 'text-zinc-500'}`}>
-                        PNG or JPG Max 5MB
-                      </p>
-                    </div>
-                  )}
+                {/* Mode Toggle */}
+                <div className={`flex gap-2 p-1 rounded-lg ${isDark ? 'bg-zinc-900/50' : 'bg-zinc-100'}`}>
+                  <button
+                    onClick={() => setUploadMode('select')}
+                    className={`flex-1 px-3 py-2 text-xs font-medium rounded transition-colors ${
+                      uploadMode === 'select'
+                        ? isDark
+                          ? 'bg-zinc-700 text-white'
+                          : 'bg-white text-black shadow-sm'
+                        : isDark
+                          ? 'text-zinc-400 hover:text-zinc-300'
+                          : 'text-zinc-600 hover:text-zinc-800'
+                    }`}
+                  >
+                    {t('main.selectVehicleModel')}
+                  </button>
+                  <button
+                    onClick={() => setUploadMode('upload')}
+                    className={`flex-1 px-3 py-2 text-xs font-medium rounded transition-colors ${
+                      uploadMode === 'upload'
+                        ? isDark
+                          ? 'bg-zinc-700 text-white'
+                          : 'bg-white text-black shadow-sm'
+                        : isDark
+                          ? 'text-zinc-400 hover:text-zinc-300'
+                          : 'text-zinc-600 hover:text-zinc-800'
+                    }`}
+                  >
+                    {t('main.orUploadTemplate')}
+                  </button>
                 </div>
-              </div>
+
+                {/* Vehicle Selector */}
+                {uploadMode === 'select' && (
+                  <div className={`max-h-[400px] overflow-y-auto ${isDark ? 'bg-zinc-900/30' : 'bg-zinc-50'} rounded border ${isDark ? 'border-zinc-800' : 'border-zinc-300'} p-4`}>
+                    <VehicleSelector 
+                      onVehicleSelect={handleVehicleSelect}
+                      selectedVehicleId={selectedVehicleId}
+                    />
+                  </div>
+                )}
+
+                {/* File Upload */}
+                {uploadMode === 'upload' && (
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`group relative border rounded p-8 text-center transition-all duration-300 cursor-pointer overflow-hidden ${
+                      isDark 
+                        ? 'border-zinc-800 bg-zinc-900/30 hover:border-zinc-600 hover:bg-zinc-900/60' 
+                        : 'border-zinc-300 bg-zinc-100/50 hover:border-zinc-400 hover:bg-zinc-200/60'
+                    }`}
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                    />
+                    
+                    {originalImage ? (
+                      <div className={`relative aspect-video w-full rounded overflow-hidden ${isDark ? 'bg-black' : 'bg-zinc-200'}`}>
+                        <img 
+                          src={`data:image/png;base64,${originalImage.includes('base64,') ? originalImage.split('base64,')[1] : originalImage}`} 
+                          className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity" 
+                          alt="Tesla vehicle wrap template preview - Custom wrap design template" 
+                        />
+                        <div className={`absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'bg-black/40' : 'bg-white/60'}`}>
+                          <span className={`text-sm font-medium tracking-wide uppercase ${isDark ? 'text-white' : 'text-black'}`}>
+                            {t('main.replaceImage')}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center py-4">
+                        <UploadIcon />
+                        <p className={isDark ? 'text-zinc-300' : 'text-zinc-700'}>
+                          {t('main.selectVehicleTemplate')}
+                        </p>
+                        <p className={`text-xs mt-2 uppercase tracking-wide ${isDark ? 'text-zinc-600' : 'text-zinc-500'}`}>
+                          PNG or JPG Max 5MB
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Selected Vehicle Info */}
+                {selectedVehicle && originalImage && (
+                  <div className={`p-3 rounded border ${isDark ? 'bg-zinc-900/50 border-zinc-700' : 'bg-zinc-100 border-zinc-300'}`}>
+                    <p className={`text-xs font-medium ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+                      {t('main.selectedVehicle')}: <span className={isDark ? 'text-white' : 'text-black'}>{(language === 'zh' ? selectedVehicle.nameZh : selectedVehicle.name)}</span>
+                    </p>
+                  </div>
+                )}
+              </section>
 
               {/* Step 2: Prompt */}
-              <div className="space-y-4">
-                <h2 className={`text-sm font-semibold tracking-widest uppercase flex items-center gap-3 ${isDark ? 'text-white' : 'text-black'}`}>
-                  <span className={`flex items-center justify-center w-5 h-5 rounded-full border ${isDark ? 'border-white' : 'border-black'} text-[10px]`}>2</span>
+              <section className="space-y-4" aria-labelledby="configuration-section">
+                <h2 id="configuration-section" className={`text-sm font-semibold tracking-widest uppercase flex items-center gap-3 ${isDark ? 'text-white' : 'text-black'}`}>
+                  <span className={`flex items-center justify-center w-5 h-5 rounded-full border ${isDark ? 'border-white' : 'border-black'} text-[10px]`} aria-hidden="true">2</span>
                   {t('main.configuration')}
                 </h2>
                 <PromptInput 
@@ -221,13 +299,13 @@ function App() {
                     </div>
                   )}
                 </div>
-              </div>
+              </section>
             </div>
           </div>
 
           {/* Right Column: Preview */}
-          <div className="lg:col-span-8 flex flex-col h-full min-h-[600px]">
-            <div className={`border rounded flex-1 overflow-hidden relative flex flex-col backdrop-blur-sm ${
+          <aside className="lg:col-span-8 flex flex-col h-full max-h-full" aria-label="Design preview">
+            <div className={`border rounded h-full overflow-hidden relative flex flex-col backdrop-blur-sm ${
               isDark 
                 ? 'bg-zinc-900/20 border-zinc-800' 
                 : 'bg-zinc-50/50 border-zinc-300'
@@ -279,7 +357,7 @@ function App() {
               </div>
 
               {/* Canvas Area */}
-              <div className={`flex-1 flex items-center justify-center relative overflow-hidden ${isDark ? 'bg-black' : 'bg-white'}`}>
+              <div className={`flex-1 flex items-center justify-center relative overflow-auto min-h-0 ${isDark ? 'bg-black' : 'bg-white'}`}>
                 {/* Subtle grid for tech feel */}
                 <div 
                   className="absolute inset-0 opacity-[0.03] dark:opacity-[0.03]" 
@@ -312,13 +390,13 @@ function App() {
                     {generatedImage ? (
                       <img 
                         src={generatedImage} 
-                        alt="Generated Wrap" 
+                        alt="AI-generated Tesla custom wrap design - Professional vehicle wrap with custom graphics and design" 
                         className={`max-w-full max-h-full object-contain shadow-2xl ${isDark ? 'shadow-black/80' : 'shadow-zinc-800/30'}`}
                       />
                     ) : originalImage ? (
                       <img 
                         src={`data:image/png;base64,${originalImage.includes('base64,') ? originalImage.split('base64,')[1] : originalImage}`} 
-                        alt="Original Template" 
+                        alt="Tesla vehicle wrap template - Base template for custom wrap design" 
                         className="max-w-full max-h-full object-contain opacity-40 grayscale blur-[0.5px]"
                       />
                     ) : null}
@@ -343,17 +421,18 @@ function App() {
               </div>
             </div>
             
-            <div className={`mt-6 flex justify-between items-center text-[10px] uppercase tracking-widest ${
+            <div className={`mt-3 lg:mt-4 flex justify-between items-center text-[10px] uppercase tracking-widest ${
               isDark ? 'text-zinc-600' : 'text-zinc-500'
             }`}>
               <p>{t('main.aiGenerationPreview')}</p>
-              <p>{t('main.designedForProfessionalUse')}</p>
+              <p className="hidden sm:inline">{t('main.designedForProfessionalUse')}</p>
             </div>
-          </div>
+          </aside>
           
         </div>
       </main>
     </div>
+    </>
   );
 }
 

@@ -23,7 +23,14 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   const setLanguage = (lang: Language) => {
     setLanguageStorage(lang);
     setLanguageState(lang);
+    // Update HTML lang attribute for SEO
+    document.documentElement.lang = lang;
   };
+
+  // Sync HTML lang attribute on mount and language changes
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const t = (key: string): string => {
     const keys = key.split('.');

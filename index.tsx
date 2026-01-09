@@ -5,9 +5,14 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { initGA } from './utils/analytics';
+import { getLanguage } from './utils/i18n';
 
 // Initialize Google Analytics
 initGA();
+
+// Update HTML lang attribute based on saved language preference
+const savedLanguage = getLanguage();
+document.documentElement.lang = savedLanguage;
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

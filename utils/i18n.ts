@@ -4,14 +4,18 @@ export const translations = {
   en: {
     // Header
     header: {
-      title: 'WrapGenius',
-      poweredBy: 'Powered by Gemini 2.5'
+      title: 'Tesla Custom Wraps',
+      poweredBy: 'Powered by DeepSeek AI'
     },
     // Main content
     main: {
       title: 'Create Your Design',
       description: 'Upload your vehicle template and define your vision. Our AI will generate a precision wrap design strictly adhering to your contours.',
       uploadTemplate: 'Upload Template',
+      selectVehicleModel: 'Select Vehicle Model',
+      orUploadTemplate: 'Upload Template',
+      selectedVehicle: 'Selected Vehicle',
+      failedToLoadTemplate: 'Failed to load template. Please try again or upload your own template.',
       configuration: 'Configuration',
       designTheme: 'Design Theme',
       designThemePlaceholder: 'e.g. Matte black with gloss stripes, cyberpunk aesthetic, minimal white logos...',
@@ -49,14 +53,18 @@ export const translations = {
   zh: {
     // Header
     header: {
-      title: 'WrapGenius',
-      poweredBy: '由 Gemini 2.5 驱动'
+      title: 'Tesla Custom Wraps',
+      poweredBy: '由 DeepSeek AI 驱动'
     },
     // Main content
     main: {
       title: '创建您的设计',
       description: '上传您的车辆模板并定义您的愿景。我们的AI将生成严格遵循轮廓的精密贴膜设计。',
       uploadTemplate: '上传模板',
+      selectVehicleModel: '选择车型',
+      orUploadTemplate: '上传模板',
+      selectedVehicle: '已选择车型',
+      failedToLoadTemplate: '加载模板失败。请重试或上传您自己的模板。',
       configuration: '配置',
       designTheme: '设计主题',
       designThemePlaceholder: '例如：哑光黑色配亮光条纹、赛博朋克美学、简约白色标志...',

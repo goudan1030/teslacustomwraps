@@ -75,7 +75,7 @@ export const Header: React.FC = () => {
           )}
 
           <div className="text-xs font-medium tracking-widest text-zinc-500 dark:text-zinc-600 uppercase hidden sm:block">
-            {t('header.poweredBy')}
+            {t('header.poweredBy').replace('Gemini 2.5', 'DeepSeek AI')}
           </div>
         </div>
       </div>

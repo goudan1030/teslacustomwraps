@@ -2,9 +2,9 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# WrapGenius AI
+# Tesla Custom Wraps
 
-一个专业的AI驱动车辆贴膜设计工具，使用Google Gemini 2.5 Flash Image模型生成设计，并支持2D和3D预览。
+一个专业的AI驱动车辆贴膜设计工具，使用Google Gemini 2.5 Flash Image模型生成设计，并支持2D和3D预览。专注于为Tesla车型创建定制化的贴膜设计。
 
 A professional AI-powered vehicle wrap designer that uses Google Gemini 2.5 Flash Image model to generate designs with 2D and 3D preview support.
 
@@ -38,8 +38,9 @@ Create `.env.local` file and configure the following variables:
 # Google Gemini API Key (必需 / Required)
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Google Analytics Measurement ID (可选 / Optional)
-VITE_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+# Google Analytics Measurement ID (可选 / Optional - 已默认配置为 G-LJLJZMLN6G)
+# 如需使用其他 GA ID，取消注释并修改下面的值
+# VITE_GA_MEASUREMENT_ID=G-LJLJZMLN6G
 
 # Google OAuth 2.0 Client ID (可选 / Optional)
 VITE_GOOGLE_CLIENT_ID=your_google_client_id_here.apps.googleusercontent.com
@@ -55,10 +56,10 @@ VITE_GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 2. 创建新的API密钥
 3. 复制密钥到 `.env.local` 文件
 
-#### Google Analytics (可选)
-1. 访问 [Google Analytics](https://analytics.google.com/)
-2. 创建新的属性或使用现有属性
-3. 复制Measurement ID (格式: G-XXXXXXXXXX)
+#### Google Analytics (已配置)
+✅ Google Analytics 已默认配置为 `G-LJLJZMLN6G`
+- GA 代码已集成到 `index.html` 中，会自动追踪页面浏览和用户事件
+- 如需使用其他 GA ID，可在 `.env.local` 中设置 `VITE_GA_MEASUREMENT_ID` 环境变量
 
 #### Google OAuth Client ID (可选)
 1. 访问 [Google Cloud Console](https://console.cloud.google.com/)
