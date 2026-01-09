@@ -1,11 +1,21 @@
 // Free image generation service using Hugging Face Inference API
 // Uses Stable Diffusion models for free image generation
 
-const HUGGINGFACE_API_KEY = import.meta.env.VITE_HUGGINGFACE_API_KEY || '';
+// Get API keys from environment - check both possible sources
+const HUGGINGFACE_API_KEY = (import.meta.env.VITE_HUGGINGFACE_API_KEY || '').trim();
 const HUGGINGFACE_API_URL = 'https://api-inference.huggingface.co/models';
 
 // Fallback to Replicate if Hugging Face fails (also has free tier)
-const REPLICATE_API_TOKEN = import.meta.env.VITE_REPLICATE_API_TOKEN || '';
+const REPLICATE_API_TOKEN = (import.meta.env.VITE_REPLICATE_API_TOKEN || '').trim();
+
+// Debug on load
+if (typeof window !== 'undefined') {
+  console.log('API Keys loaded:', {
+    huggingface: HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : 'NOT SET',
+    replicate: REPLICATE_API_TOKEN ? `${REPLICATE_API_TOKEN.substring(0, 10)}...` : 'NOT SET',
+    env_keys: Object.keys(import.meta.env).filter(k => k.includes('HUGGING') || k.includes('REPLICATE'))
+  });
+}
 
 export const generateWrapDesign = async (
   imageBase64: string,
@@ -14,11 +24,13 @@ export const generateWrapDesign = async (
   try {
     // Debug: Check if API keys are loaded
     console.log('Free Image Service - Checking API keys:');
-    console.log('HUGGINGFACE_API_KEY:', HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : 'NOT SET');
+    console.log('HUGGINGFACE_API_KEY length:', HUGGINGFACE_API_KEY ? HUGGINGFACE_API_KEY.length : 0);
+    console.log('HUGGINGFACE_API_KEY preview:', HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : 'NOT SET');
     console.log('REPLICATE_API_TOKEN:', REPLICATE_API_TOKEN ? `${REPLICATE_API_TOKEN.substring(0, 10)}...` : 'NOT SET');
+    console.log('All env vars:', Object.keys(import.meta.env).filter(k => k.includes('API')));
     
     // Try Hugging Face first (completely free for some models)
-    if (HUGGINGFACE_API_KEY && HUGGINGFACE_API_KEY.trim() !== '') {
+    if (HUGGINGFACE_API_KEY && HUGGINGFACE_API_KEY.length > 0) {
       console.log('Attempting Hugging Face image generation...');
       try {
         return await generateWithHuggingFace(imageBase64, userPrompt);
@@ -56,9 +68,18 @@ const generateWithHuggingFace = async (
   imageBase64: string,
   userPrompt: string
 ): Promise<string> => {
-  // Use Stable Diffusion XL for better quality
-  // If this model is unavailable, try: runwayml/stable-diffusion-v1-5
-  const model = 'stabilityai/stable-diffusion-xl-base-1.0';
+  // Use the most stable and commonly available model
+  // runwayml/stable-diffusion-v1-5 is the most reliable
+  const model = 'runwayml/stable-diffusion-v1-5';
+  
+  return await tryHuggingFaceModel(model, imageBase64, userPrompt);
+};
+
+const tryHuggingFaceModel = async (
+  model: string,
+  imageBase64: string,
+  userPrompt: string
+): Promise<string> => {
   
   const enhancedPrompt = `Professional vehicle wrap design: ${userPrompt}. 
 Flat 2D technical drawing style, black outlines defining vehicle parts, 
@@ -69,6 +90,11 @@ clean production-ready layout, high quality, detailed design, vector art style.`
   const proxyUrl = `/api/huggingface/models/${model}`;
   
   console.log('Calling Hugging Face via proxy:', proxyUrl);
+  console.log('API Key available:', HUGGINGFACE_API_KEY ? `YES (${HUGGINGFACE_API_KEY.length} chars)` : 'NO');
+  
+  if (!HUGGINGFACE_API_KEY || HUGGINGFACE_API_KEY.length === 0) {
+    throw new Error('Hugging Face API key is not configured. Please set VITE_HUGGINGFACE_API_KEY in .env.local and restart the server.');
+  }
   
   const response = await fetch(proxyUrl, {
     method: 'POST',
@@ -79,25 +105,32 @@ clean production-ready layout, high quality, detailed design, vector art style.`
     body: JSON.stringify({
       inputs: enhancedPrompt,
       parameters: {
-        num_inference_steps: 30, // Reduced for faster generation
+        num_inference_steps: 20, // Reduced for faster generation
         guidance_scale: 7.5,
-        width: 1024,
-        height: 1024,
       }
     })
   });
 
   if (!response.ok) {
-    // Hugging Face may return 503 if model is loading, wait and retry
+    // Handle different error statuses
     if (response.status === 503) {
-      const data = await response.json();
+      // Model is loading, wait and retry
+      const data = await response.json().catch(() => ({}));
       const estimatedTime = data.estimated_time || 20;
-      console.log(`Model loading, waiting ${estimatedTime}s...`);
-      await new Promise(resolve => setTimeout(resolve, estimatedTime * 1000));
-      return generateWithHuggingFace(imageBase64, userPrompt);
+      console.log(`Model ${model} is loading, waiting ${estimatedTime}s...`);
+      await new Promise(resolve => setTimeout(resolve, Math.min(estimatedTime * 1000, 30000))); // Max 30s
+      return tryHuggingFaceModel(model, imageBase64, userPrompt); // Retry same model
     }
+    
+    if (response.status === 410 || response.status === 404) {
+      // Model not found or removed, try alternative
+      console.warn(`Model ${model} not available (${response.status}), trying alternative...`);
+      throw new Error(`Model ${model} not available. Please try a different model.`);
+    }
+    
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Hugging Face API error: ${response.status}`);
+    const errorMsg = errorData.error || errorData.message || `Hugging Face API error: ${response.status}`;
+    throw new Error(errorMsg);
   }
 
   const blob = await response.blob();

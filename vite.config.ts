@@ -18,11 +18,17 @@ export default defineConfig(({ mode }) => {
               proxy.on('proxyReq', (proxyReq, req: any) => {
                 // Forward the Authorization header from the custom header
                 const authHeader = req.headers['x-huggingface-token'];
+                console.log('Proxy: Forwarding Hugging Face request, token present:', !!authHeader);
                 if (authHeader) {
                   proxyReq.setHeader('Authorization', `Bearer ${authHeader}`);
                   // Remove the custom header so it's not sent to Hugging Face
                   proxyReq.removeHeader('x-huggingface-token');
+                } else {
+                  console.error('Proxy: No Hugging Face token found in request headers!');
                 }
+              });
+              proxy.on('error', (err, req, res) => {
+                console.error('Proxy error:', err);
               });
             }
           },

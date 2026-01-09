@@ -13,9 +13,13 @@ export const generateWrapDesign = async (
       throw new Error('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your .env.local file.');
     }
 
-    // Try models in order: Flash (faster) -> Pro (more capable)
-    // Note: Model names may vary, try common variations
-    const models = ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+    // Try models in order: Use correct Gemini API model names
+    // Based on Google's Gemini API documentation
+    const models = [
+      'gemini-1.5-flash',  // Most common and stable
+      'gemini-1.5-pro',    // More capable version
+      'gemini-pro'         // Legacy name
+    ];
     
     let lastError: Error | null = null;
     
@@ -161,7 +165,10 @@ Please generate an image that follows the design rules. The template shows vehic
   };
 
   // Gemini API endpoint
-  const url = `${GEMINI_API_URL}/${model}:generateContent?key=${GEMINI_API_KEY}`;
+  // Use v1beta API with correct model name format
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+  
+  console.log(`Calling Gemini API: ${model}`);
   
   return await fetch(url, {
     method: 'POST',
