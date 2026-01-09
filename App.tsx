@@ -148,11 +148,11 @@ function App() {
       <div className={`min-h-screen flex flex-col ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'} font-light transition-colors duration-300`}>
         <Header />
 
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 min-h-0">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 h-[calc(100vh-20rem)] lg:h-[calc(100vh-18rem)]">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 overflow-y-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 pb-8">
           
           {/* Left Column: Controls - Fixed alignment */}
-          <div className="lg:col-span-4 flex flex-col overflow-y-auto">
+          <div className="lg:col-span-4 flex flex-col">
             <div className="space-y-6 lg:space-y-8 flex-shrink-0 pr-2">
               <header className="space-y-6">
                 <h1 className={`text-3xl font-semibold tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
@@ -312,8 +312,8 @@ function App() {
           </div>
 
           {/* Right Column: Preview */}
-          <aside className="lg:col-span-8 flex flex-col h-full max-h-full" aria-label="Design preview">
-            <div className={`border rounded h-full overflow-hidden relative flex flex-col backdrop-blur-sm ${
+          <aside className="lg:col-span-8 flex flex-col min-h-[600px] lg:min-h-[calc(100vh-22rem)]" aria-label="Design preview">
+            <div className={`border rounded flex-1 overflow-hidden relative flex flex-col backdrop-blur-sm ${
               isDark 
                 ? 'bg-zinc-900/20 border-zinc-800' 
                 : 'bg-zinc-50/50 border-zinc-300'

@@ -9,7 +9,7 @@ export const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className={`border-t ${isDark ? 'border-zinc-800 bg-black/80' : 'border-zinc-300 bg-white/80'} backdrop-blur-md mt-auto`}>
+    <footer className={`border-t ${isDark ? 'border-zinc-800 bg-black/80' : 'border-zinc-300 bg-white/80'} backdrop-blur-md mt-auto relative z-10`}>
       <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
           {/* Brand Section */}
