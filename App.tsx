@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Header } from './components/Header';
+import { Footer } from './components/Footer';
 import { PromptInput } from './components/PromptInput';
 import { Button } from './components/Button';
 import { SEO } from './components/SEO';
@@ -147,8 +148,8 @@ function App() {
       <div className={`min-h-screen flex flex-col ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'} font-light transition-colors duration-300`}>
         <Header />
 
-      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 h-[calc(100vh-12rem)] lg:h-[calc(100vh-10rem)]">
+      <main className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8 min-h-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 h-[calc(100vh-20rem)] lg:h-[calc(100vh-18rem)]">
           
           {/* Left Column: Controls - Fixed alignment */}
           <div className="lg:col-span-4 flex flex-col overflow-y-auto">
@@ -454,6 +455,8 @@ function App() {
           
         </div>
       </main>
+      
+      <Footer />
     </div>
     </>
   );

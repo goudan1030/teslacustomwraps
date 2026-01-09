@@ -48,6 +48,20 @@ export const translations = {
       // Theme
       lightMode: 'Light Mode',
       darkMode: 'Dark Mode'
+    },
+    // Footer
+    footer: {
+      brand: 'Tesla Custom Wraps',
+      description: 'AI-powered vehicle wrap designer for creating custom Tesla wraps with professional 2D and 3D preview capabilities.',
+      quickLinks: 'Quick Links',
+      templates: 'Templates',
+      teslaOfficial: 'Tesla Official',
+      about: 'About',
+      poweredBy: 'Powered by DeepSeek AI',
+      aiPowered: 'AI-Powered Design',
+      allRightsReserved: 'All rights reserved.',
+      privacy: 'Privacy Policy',
+      terms: 'Terms of Service'
     }
   },
   zh: {
@@ -97,6 +111,20 @@ export const translations = {
       // Theme
       lightMode: '明亮模式',
       darkMode: '暗黑模式'
+    },
+    // Footer
+    footer: {
+      brand: 'Tesla Custom Wraps',
+      description: 'AI驱动的车辆贴膜设计工具，为Tesla车型提供专业的2D和3D预览功能。',
+      quickLinks: '快速链接',
+      templates: '模板库',
+      teslaOfficial: 'Tesla官网',
+      about: '关于',
+      poweredBy: '由 DeepSeek AI 驱动',
+      aiPowered: 'AI驱动设计',
+      allRightsReserved: '版权所有。',
+      privacy: '隐私政策',
+      terms: '服务条款'
     }
   }
 };
