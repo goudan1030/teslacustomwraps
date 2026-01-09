@@ -34,28 +34,15 @@ export const VehicleSelector: React.FC<VehicleSelectorProps> = ({
     setError(null);
 
     try {
-      // Try to load from GitHub raw URL
-      // The template file is named template.png in the GitHub repository
-      const tryUrls = [
-        vehicle.templateUrl,
-        `https://raw.githubusercontent.com/teslamotors/custom-wraps/master/${vehicle.githubPath}/template.png`,
-      ];
-
-      let base64Image: string | null = null;
-      let lastError: Error | null = null;
-
-      for (const url of tryUrls) {
-        try {
-          base64Image = await urlToBase64(url);
-          break;
-        } catch (err) {
-          lastError = err as Error;
-          continue;
-        }
-      }
+      // Load local template file from public/templates directory
+      // The templateUrl is already set to /templates/{model}/template.png
+      const localPath = vehicle.templateUrl;
+      
+      // Convert local image to base64
+      const base64Image = await urlToBase64(localPath);
 
       if (!base64Image) {
-        throw lastError || new Error('Failed to load template');
+        throw new Error('Failed to load template');
       }
 
       onVehicleSelect(base64Image, vehicle);
