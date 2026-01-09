@@ -13,34 +13,40 @@ export const generateWrapDesign = async (
       throw new Error('DeepSeek API key is not configured. Please set VITE_DEEPSEEK_API_KEY in your .env.local file.');
     }
 
+    // Note: DeepSeek Chat API does not support image inputs (multimodal)
+    // The API only accepts text content in messages. We'll use text-only prompts.
+    // For actual image generation, we would need DeepSeek's image generation API (if available)
+    // or integrate with another image generation service.
+    
     // Construct the system prompt for vehicle wrap design
     const systemPrompt = `You are an expert vehicle wrap designer AI assistant. 
-Your task is to help users create custom vehicle wrap designs based on their templates and design themes.
+Your task is to help users create custom vehicle wrap designs based on vehicle templates and design themes.
 
 CRITICAL DESIGN RULES:
-1. STRICTLY PRESERVE the original image layout, aspect ratio, and black outline contours.
-2. Apply graphics ONLY within the white spaces of the template parts.
+1. STRICTLY PRESERVE the original template layout, aspect ratio, and outline contours.
+2. Apply graphics ONLY within the designated areas of the template parts.
 3. Do NOT paint over the background (keep it white/transparent as in original).
-4. Do NOT distort the shapes of the car parts.
+4. Do NOT distort the shapes of the vehicle parts.
 5. The output must look like a flat 2D printable vehicle wrap file ready for production.
 6. Do not add any text unless explicitly requested in the theme.
 
 User's design theme: ${userPrompt}`;
 
-    // For image processing, we'll use DeepSeek Vision model
-    // Note: DeepSeek may not support direct image generation/editing
-    // This is a placeholder implementation that would need to be adapted based on DeepSeek's actual capabilities
-    
-    // Convert base64 image to data URL for embedding
-    const imageDataUrl = `data:image/png;base64,${imageBase64}`;
+    // DeepSeek API only supports text messages, not images
+    // content must be a string, not an array
+    const userMessage = `I have a vehicle wrap template image with black outlines and white fill areas. 
+I want to apply the following design theme: "${userPrompt}"
 
-    // Since DeepSeek API may not directly support image editing,
-    // we'll use a vision model to analyze and provide design guidance
-    // For actual image generation, you may need to use DeepSeek's image generation endpoint
-    // or combine with other image processing services
+The template is a 2D flat layout that must be preserved exactly. The design should:
+- Preserve all black outline contours exactly
+- Apply the design theme only within the white areas
+- Maintain the exact layout and proportions
+- Be ready for production printing
+
+Please provide detailed design guidance following these requirements.`;
 
     const requestBody = {
-      model: 'deepseek-chat', // Using chat model - adjust based on available models
+      model: 'deepseek-chat', // Using chat model - text only
       messages: [
         {
           role: 'system',
@@ -48,18 +54,7 @@ User's design theme: ${userPrompt}`;
         },
         {
           role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `Please help me design a vehicle wrap based on this template. The design theme is: "${userPrompt}". The template image shows the vehicle outline that must be preserved exactly.`
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: imageDataUrl
-              }
-            }
-          ]
+          content: userMessage  // Must be a string, not an array
         }
       ],
       temperature: 0.7,
@@ -83,16 +78,23 @@ User's design theme: ${userPrompt}`;
     const data = await response.json();
     
     // DeepSeek chat models return text responses, not images
-    // For actual image generation, you would need:
-    // 1. DeepSeek's image generation API (if available)
-    // 2. Or use a combination approach where DeepSeek generates design instructions
-    //    and another service creates the actual image
+    // The API only supports text completion, not image generation
+    console.log('DeepSeek API Response:', data);
+    
+    // Extract the text response
+    const textResponse = data.choices?.[0]?.message?.content || '';
+    console.log('Design guidance:', textResponse);
+    
+    // Since DeepSeek Chat API cannot generate images, we return the original template
+    // In a production environment, you would need to:
+    // 1. Use DeepSeek's image generation API (if available)
+    // 2. Use another image generation service (e.g., Stable Diffusion, DALL-E)
+    // 3. Process the template locally with the design guidance from DeepSeek
     
     // For now, return the original image as a placeholder
-    // TODO: Integrate with DeepSeek image generation endpoint when available
-    // or use an image generation service that can create the design based on DeepSeek's analysis
-    
-    console.warn('DeepSeek returned text response. Image generation requires additional service integration.');
+    // TODO: Integrate with actual image generation service
+    console.warn('DeepSeek Chat API does not support image generation. Returning original template as placeholder.');
+    console.warn('Design guidance received:', textResponse.substring(0, 200) + '...');
     
     // Return original image as placeholder until image generation is implemented
     return `data:image/png;base64,${imageBase64}`;
