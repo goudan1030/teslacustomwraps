@@ -13,60 +13,99 @@ export const generateWrapDesign = async (
       throw new Error('Gemini API key is not configured. Please set VITE_GEMINI_API_KEY in your .env.local file.');
     }
 
-    // Try Gemini 2.0 Flash first, fallback to Gemini 1.5 Pro
-    let model = 'gemini-2.0-flash-exp';
-    let response = await callGeminiAPI(model, imageBase64, userPrompt);
-
-    // If model not found, try Gemini 1.5 Pro
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      if (errorData.error?.message?.includes('not found') || response.status === 404) {
-        console.warn('Gemini 2.0 not available, trying Gemini 1.5 Pro');
-        model = 'gemini-1.5-pro';
-        response = await callGeminiAPI(model, imageBase64, userPrompt);
-      }
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `Gemini API error: ${response.status} ${response.statusText}`);
-    }
-
-    const data = await response.json();
+    // Try models in order: Flash (faster) -> Pro (more capable)
+    const models = ['gemini-1.5-flash', 'gemini-1.5-pro'];
     
-    // Extract image from response
-    // Gemini can return images in the response candidates
-    if (data.candidates && data.candidates[0]) {
-      const candidate = data.candidates[0];
-      
-      // Check for image in content parts
-      if (candidate.content && candidate.content.parts) {
-        for (const part of candidate.content.parts) {
-          if (part.inlineData && part.inlineData.data) {
-            const mimeType = part.inlineData.mimeType || 'image/png';
-            return `data:${mimeType};base64,${part.inlineData.data}`;
+    let lastError: Error | null = null;
+    
+    for (const model of models) {
+      try {
+        console.log(`Trying Gemini model: ${model}`);
+        let response = await callGeminiAPI(model, imageBase64, userPrompt);
+
+        // Handle 429 rate limit - wait and retry once
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 60000; // Default 60 seconds
+          
+          console.warn(`Rate limit hit (429). Waiting ${waitTime / 1000} seconds before retry...`);
+          await new Promise(resolve => setTimeout(resolve, Math.min(waitTime, 60000))); // Max 60s wait
+          
+          // Retry once
+          response = await callGeminiAPI(model, imageBase64, userPrompt);
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          
+          // Handle specific error codes
+          if (response.status === 429) {
+            const errorMsg = errorData.error?.message || 'Rate limit exceeded';
+            throw new Error(`Gemini API速率限制已达到（429）。请稍候再试，或配置备用API服务。\n${errorMsg}\n\n提示：可以在.env.local中添加VITE_HUGGINGFACE_API_KEY或VITE_REPLICATE_API_TOKEN作为备用。`);
+          }
+          
+          if (response.status === 404 || errorData.error?.message?.includes('not found')) {
+            console.warn(`Model ${model} not available, trying next model`);
+            lastError = new Error(`Model ${model} not found`);
+            continue; // Try next model
+          }
+          
+          throw new Error(errorData.error?.message || `Gemini API error: ${response.status} ${response.statusText}`);
+        }
+
+        // Success - process response
+        const data = await response.json();
+
+        // Extract image from response
+        // Note: Gemini API currently doesn't support image generation directly
+        // It can analyze images but returns text descriptions
+        if (data.candidates && data.candidates[0]) {
+          const candidate = data.candidates[0];
+          
+          // Check for image in content parts (if Gemini starts supporting image generation)
+          if (candidate.content && candidate.content.parts) {
+            for (const part of candidate.content.parts) {
+              if (part.inlineData && part.inlineData.data) {
+                const mimeType = part.inlineData.mimeType || 'image/png';
+                return `data:${mimeType};base64,${part.inlineData.data}`;
+              }
+            }
+          }
+          
+          // Gemini returns text description, not images
+          const textResponse = candidate.content?.parts?.[0]?.text;
+          if (textResponse) {
+            console.log('Gemini analysis:', textResponse.substring(0, 200));
           }
         }
+
+        // Gemini doesn't generate images, return original template
+        // TODO: Use Gemini's text output with another image generation service
+        console.warn('Gemini API does not support direct image generation. It can analyze images but returns text descriptions.');
+        return `data:image/png;base64,${imageBase64}`;
+        
+      } catch (error: any) {
+        console.error(`Error with model ${model}:`, error);
+        lastError = error;
+        // Continue to next model
+        continue;
       }
     }
 
-    // If no image in response, Gemini might have returned text describing the design
-    // In that case, we'll use the text to create a prompt for image generation
-    const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (textResponse) {
-      console.log('Gemini returned text description:', textResponse);
-      // For now, return original image as Gemini text-to-image is still evolving
-      // In the future, we could use this text with DALL-E or another image generator
-      console.warn('Gemini returned text instead of image. Image generation capability may require a different approach.');
+    // If all models failed, throw the last error
+    if (lastError) {
+      throw lastError;
     }
 
-    // Fallback: return original image if no image generated
-    console.warn('No image data in Gemini response. Returning original template.');
-    return `data:image/png;base64,${imageBase64}`;
+    throw new Error('All Gemini models failed');
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    throw new Error(error.message || "Failed to generate design with Gemini.");
+    // Re-throw with improved error message
+    if (error.message.includes('速率限制') || error.message.includes('429')) {
+      throw error; // Already has good error message
+    }
+    throw new Error(error.message || "Gemini API调用失败。请检查API密钥配置或稍后重试。");
   }
 };
 

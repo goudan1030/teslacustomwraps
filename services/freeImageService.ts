@@ -31,12 +31,8 @@ export const generateWrapDesign = async (
       }
     }
 
-    // If no API keys provided, return original image with message
-    console.warn('No free API keys configured. Please set VITE_HUGGINGFACE_API_KEY or VITE_REPLICATE_API_TOKEN in .env.local');
-    console.warn('Get free API keys:');
-    console.warn('  - Hugging Face: https://huggingface.co/settings/tokens');
-    console.warn('  - Replicate: https://replicate.com/account/api-tokens');
-    return `data:image/png;base64,${imageBase64}`;
+    // If no API keys provided, throw helpful error
+    throw new Error('未配置免费API服务。请配置以下任一服务：\n\n1. Hugging Face (完全免费):\n   访问 https://huggingface.co/settings/tokens 获取Token\n   在.env.local中添加: VITE_HUGGINGFACE_API_KEY=your_token\n\n2. Replicate (免费额度):\n   访问 https://replicate.com/account/api-tokens 获取Token\n   在.env.local中添加: VITE_REPLICATE_API_TOKEN=your_token\n\n或者等待Gemini API速率限制解除后再试。');
 
   } catch (error: any) {
     console.error("Free Image Service Error:", error);
