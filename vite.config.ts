@@ -8,6 +8,40 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          // Proxy Hugging Face API to avoid CORS issues
+          '/api/huggingface': {
+            target: 'https://api-inference.huggingface.co',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api\/huggingface/, ''),
+            configure: (proxy, _options) => {
+              proxy.on('proxyReq', (proxyReq, req: any) => {
+                // Forward the Authorization header from the custom header
+                const authHeader = req.headers['x-huggingface-token'];
+                if (authHeader) {
+                  proxyReq.setHeader('Authorization', `Bearer ${authHeader}`);
+                  // Remove the custom header so it's not sent to Hugging Face
+                  proxyReq.removeHeader('x-huggingface-token');
+                }
+              });
+            }
+          },
+          // Proxy Replicate API if needed
+          '/api/replicate': {
+            target: 'https://api.replicate.com',
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api\/replicate/, ''),
+            configure: (proxy, _options) => {
+              proxy.on('proxyReq', (proxyReq, req: any) => {
+                const authHeader = req.headers['x-replicate-token'];
+                if (authHeader) {
+                  proxyReq.setHeader('Authorization', `Token ${authHeader}`);
+                  proxyReq.removeHeader('x-replicate-token');
+                }
+              });
+            }
+          }
+        }
       },
       plugins: [react()],
       define: {

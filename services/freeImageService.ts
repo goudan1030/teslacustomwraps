@@ -64,12 +64,17 @@ const generateWithHuggingFace = async (
 Flat 2D technical drawing style, black outlines defining vehicle parts, 
 clean production-ready layout, high quality, detailed design, vector art style.`;
 
-  // Hugging Face Inference API format
-  const response = await fetch(`${HUGGINGFACE_API_URL}/${model}`, {
+  // Use Vite proxy to avoid CORS issues
+  // The proxy is configured in vite.config.ts
+  const proxyUrl = `/api/huggingface/models/${model}`;
+  
+  console.log('Calling Hugging Face via proxy:', proxyUrl);
+  
+  const response = await fetch(proxyUrl, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
       'Content-Type': 'application/json',
+      'X-HuggingFace-Token': HUGGINGFACE_API_KEY, // Pass token via custom header
     },
     body: JSON.stringify({
       inputs: enhancedPrompt,
@@ -123,11 +128,12 @@ const generateWithReplicate = async (
 Flat 2D technical drawing style, black outlines defining vehicle parts, 
 clean production-ready layout, high quality, detailed design.`;
 
-  const response = await fetch('https://api.replicate.com/v1/predictions', {
+  // Use Vite proxy to avoid CORS issues
+  const response = await fetch('/api/replicate/v1/predictions', {
     method: 'POST',
     headers: {
-      'Authorization': `Token ${REPLICATE_API_TOKEN}`,
       'Content-Type': 'application/json',
+      'X-Replicate-Token': REPLICATE_API_TOKEN, // Pass token via custom header
     },
     body: JSON.stringify({
       version: 'db21e45d3f7023abc2a46ee38a23973f6dce16bb082a930b0c49861f96d1e5bf', // Stable Diffusion 2.1
@@ -148,17 +154,17 @@ clean production-ready layout, high quality, detailed design.`;
 
   const prediction = await response.json();
   
-  // Poll for completion
-  let status = prediction.status;
-  let result = prediction;
-  
-  while (status === 'starting' || status === 'processing') {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-      headers: {
-        'Authorization': `Token ${REPLICATE_API_TOKEN}`,
-      }
-    });
+    // Poll for completion
+    let status = prediction.status;
+    let result = prediction;
+    
+    while (status === 'starting' || status === 'processing') {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const statusResponse = await fetch(`/api/replicate/v1/predictions/${prediction.id}`, {
+        headers: {
+          'X-Replicate-Token': REPLICATE_API_TOKEN,
+        }
+      });
     
     result = await statusResponse.json();
     status = result.status;
