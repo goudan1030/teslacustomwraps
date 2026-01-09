@@ -22,7 +22,7 @@ export const Header: React.FC = () => {
 
   return (
     <header className="border-b border-zinc-800 dark:border-zinc-700 bg-black/80 dark:bg-white/80 backdrop-blur-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-white dark:bg-black text-black dark:text-white rounded flex items-center justify-center">
              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,7 +75,7 @@ export const Header: React.FC = () => {
           )}
 
           <div className="text-xs font-medium tracking-widest text-zinc-500 dark:text-zinc-600 uppercase hidden sm:block">
-            {t('header.poweredBy').replace('Gemini 2.5', 'DeepSeek AI')}
+            {t('header.poweredBy')}
           </div>
         </div>
       </div>

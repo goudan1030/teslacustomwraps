@@ -33,9 +33,9 @@
 1. 点击页面顶部的项目选择器（显示当前项目名称的下拉菜单）
 2. 点击 **"新建项目"** 按钮
 3. 填写项目信息：
-   - **项目名称**：例如 `Tesla Custom Wraps` 或 `WrapGenius AI`
-   - **项目ID**：系统会自动生成，也可以自定义（全局唯一）
-   - **位置**：选择组织或"无组织"（根据您的需求）
+  - **项目名称**：例如 `Tesla Custom Wraps` 或 `WrapGenius AI`
+  - **项目ID**：系统会自动生成，也可以自定义（全局唯一）
+  - **位置**：选择组织或"无组织"（根据您的需求）
 4. 点击 **"创建"** 按钮
 5. 等待项目创建完成（通常需要几秒钟）
 
@@ -53,9 +53,8 @@
 ### 2.2 选择用户类型
 
 1. 选择用户类型：
-   - **外部**：允许任何拥有Google账号的用户登录（推荐用于测试和公开应用）
-   - **内部**：仅限您组织内的用户（需要Google Workspace）
-
+  - **外部**：允许任何拥有Google账号的用户登录（推荐用于测试和公开应用）
+  - **内部**：仅限您组织内的用户（需要Google Workspace）
 2. 点击 **"创建"**
 
 ### 2.3 填写应用信息
@@ -63,30 +62,33 @@
 填写以下必填信息：
 
 **应用信息：**
+
 - **应用名称**：`Tesla Custom Wraps`（显示给用户的应用名称）
 - **用户支持电子邮件**：选择您的邮箱地址
 - **应用徽标**：可选，上传应用图标（建议 120x120 像素）
 
 **应用域名：**
+
 - **应用首页链接**：`https://teslacustomwraps.com`（或您的实际域名）
 - **应用隐私政策链接**：`https://teslacustomwraps.com/privacy`（可选，但推荐）
 - **应用服务条款链接**：`https://teslacustomwraps.com/terms`（可选）
 
 **已获授权的网域：**
+
 - 添加您的域名：`teslacustomwraps.com`（不带 www）
 - 如果使用其他域名，也要添加
 
 **开发者联系信息：**
+
 - **电子邮件地址**：输入您的开发者邮箱
 
 ### 2.4 添加作用域（Scopes）
 
 1. 点击 **"添加或移除作用域"**
 2. 在左侧选择以下作用域：
-   - ✅ `email` - 查看用户的电子邮件地址
-   - ✅ `profile` - 查看用户的基本配置文件信息
-   - ✅ `openid` - 使用OpenID Connect进行身份验证
-
+  - ✅ `email` - 查看用户的电子邮件地址
+  - ✅ `profile` - 查看用户的基本配置文件信息
+  - ✅ `openid` - 使用OpenID Connect进行身份验证
 3. 点击 **"更新"**，然后点击 **"保存并继续"**
 
 ### 2.5 添加测试用户（如果选择"外部"用户类型）
@@ -121,31 +123,37 @@
 ### 3.3 配置OAuth客户端
 
 **应用类型：**
+
 - 选择 **"Web 应用"**
 
 **名称：**
+
 - 输入客户端名称，例如：`Tesla Custom Wraps Web Client`
 
 **已授权的JavaScript来源：**
 添加以下URL（每行一个）：
+
 ```
 http://localhost:3000
 http://127.0.0.1:3000
-https://teslacustomwraps.com
-https://www.teslacustomwraps.com
+https://teslacustomwraps.top
+https://www.teslacustomwraps.top
 ```
+
 **注意**：根据您的实际部署域名添加所有需要支持的域名。
 
 **已授权的重定向URI：**
 添加以下URI（每行一个）：
+
 ```
 http://localhost:3000
 http://127.0.0.1:3000
-https://teslacustomwraps.com
-https://www.teslacustomwraps.com
+https://teslacustomwraps.top
+https://www.teslacustomwraps.top
 ```
 
 **说明：**
+
 - 对于开发环境，添加 `http://localhost:3000`
 - 对于生产环境，添加您的实际域名
 - 确保使用 `http://` 或 `https://`，不要遗漏协议
@@ -155,8 +163,8 @@ https://www.teslacustomwraps.com
 
 1. 点击 **"创建"** 按钮
 2. 系统会显示一个对话框，包含：
-   - **客户端ID**：类似于 `123456789-abcdefghijklmnop.apps.googleusercontent.com`
-   - **客户端密钥**：类似于 `GOCSPX-xxxxxxxxxxxxxxxxxxxxx`
+  - **客户端ID**：类似于 `123456789-abcdefghijklmnop.apps.googleusercontent.com`
+  - **客户端密钥**：类似于 `GOCSPX-xxxxxxxxxxxxxxxxxxxxx`
 
 ## 📝 步骤四：配置授权域名
 
@@ -165,8 +173,8 @@ https://www.teslacustomwraps.com
 1. 返回 **"OAuth同意屏幕"** 页面
 2. 在 **"已获授权的网域"** 部分
 3. 添加您的域名（不带协议和路径）：
-   - `teslacustomwraps.com`
-   - `localhost`（用于开发测试）
+  - `teslacustomwraps.com`
+  - `localhost`（用于开发测试）
 
 ## 🗝️ 步骤五：获取客户端ID和密钥
 
@@ -205,6 +213,7 @@ VITE_GOOGLE_CLIENT_SECRET=你的客户端密钥
 ### 6.2 替换占位符
 
 将以下占位符替换为实际值：
+
 - `你的客户端ID.apps.googleusercontent.com` → 替换为步骤5.2中复制的客户端ID
 - `你的客户端密钥` → 替换为步骤5.2中复制的客户端密钥（如果需要）
 
@@ -229,8 +238,8 @@ VITE_GOOGLE_CLIENT_SECRET=你的客户端密钥
 4. 选择要用于测试的Google账号
 5. 如果看到权限请求页面，点击 **"允许"**
 6. 登录成功后，应该能看到：
-   - 您的Google账号头像
-   - 按钮文字变为 **"登出"** 或 **"Sign Out"**
+  - 您的Google账号头像
+  - 按钮文字变为 **"登出"** 或 **"Sign Out"**
 
 ### 7.3 验证功能
 
@@ -243,10 +252,12 @@ VITE_GOOGLE_CLIENT_SECRET=你的客户端密钥
 ### 问题1：点击登录按钮没有反应
 
 **可能原因：**
+
 - Google API脚本未正确加载
 - 客户端ID配置错误
 
 **解决方法：**
+
 1. 检查浏览器控制台是否有错误信息
 2. 确认 `.env.local` 文件中的 `VITE_GOOGLE_CLIENT_ID` 配置正确
 3. 确认已重启开发服务器
@@ -255,10 +266,12 @@ VITE_GOOGLE_CLIENT_SECRET=你的客户端密钥
 ### 问题2：显示"错误 400：redirect_uri_mismatch"
 
 **可能原因：**
+
 - 重定向URI未正确配置
 - 当前访问的URL与配置的授权来源不匹配
 
 **解决方法：**
+
 1. 检查Google Cloud Console中的"已授权的JavaScript来源"
 2. 确保添加了 `http://localhost:3000`（开发环境）
 3. 确保添加了生产域名（生产环境）
@@ -268,10 +281,12 @@ VITE_GOOGLE_CLIENT_SECRET=你的客户端密钥
 ### 问题3：显示"此应用未经验证"
 
 **可能原因：**
+
 - OAuth同意屏幕配置不完整
 - 应用未发布到生产环境
 
 **解决方法：**
+
 1. 对于开发测试：添加测试用户到OAuth同意屏幕
 2. 对于生产环境：完成应用验证流程（需要Google审核）
 3. 临时解决方案：在"OAuth同意屏幕"中添加测试用户
@@ -279,10 +294,12 @@ VITE_GOOGLE_CLIENT_SECRET=你的客户端密钥
 ### 问题4：无法获取用户信息
 
 **可能原因：**
+
 - 作用域配置不正确
 - API未启用
 
 **解决方法：**
+
 1. 检查OAuth同意屏幕中是否正确添加了 `email`、`profile`、`openid` 作用域
 2. 确认已启用 Google Identity Services API
 3. 检查浏览器控制台的错误信息
@@ -290,13 +307,19 @@ VITE_GOOGLE_CLIENT_SECRET=你的客户端密钥
 ### 问题5：开发环境可以登录，但生产环境不行
 
 **可能原因：**
+
 - 生产域名未添加到授权来源
 - 使用了 `http` 但生产环境是 `https`
 
 **解决方法：**
-1. 在Google Cloud Console中添加生产域名到"已授权的JavaScript来源"
-2. 确保使用正确的协议（生产环境通常使用 `https://`）
-3. 清除浏览器缓存和Cookie后重试
+
+1. 在Google Cloud Console中添加生产域名到"已授权的JavaScript来源"：
+  - `https://teslacustomwraps.top`
+  - `https://www.teslacustomwraps.top`
+2. 同样添加到"已授权的重定向URI"
+3. 确保使用正确的协议（生产环境使用 `https://`）
+4. 清除浏览器缓存和Cookie后重试
+5. 注意：配置更改可能需要5分钟到几小时才能生效
 
 ## 🔒 安全注意事项
 
@@ -336,15 +359,15 @@ VITE_GOOGLE_CLIENT_SECRET=你的客户端密钥
 
 配置完成后，请确认：
 
-- [ ] Google Cloud项目已创建
-- [ ] OAuth同意屏幕已配置
-- [ ] OAuth 2.0 客户端ID已创建
-- [ ] 授权域名已添加（包括localhost和生产域名）
-- [ ] 客户端ID已添加到 `.env.local`
-- [ ] 开发服务器已重启
-- [ ] 登录功能测试通过
-- [ ] 登出功能测试通过
-- [ ] 生产环境域名已配置（如已部署）
+- Google Cloud项目已创建
+- OAuth同意屏幕已配置
+- OAuth 2.0 客户端ID已创建
+- 授权域名已添加（包括localhost和生产域名）
+- 客户端ID已添加到 `.env.local`
+- 开发服务器已重启
+- 登录功能测试通过
+- 登出功能测试通过
+- 生产环境域名已配置（如已部署）
 
 ---
 

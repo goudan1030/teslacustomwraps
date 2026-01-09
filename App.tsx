@@ -142,6 +142,7 @@ function App() {
         title="Tesla Custom Wraps - AI-Powered Vehicle Wrap Design | Professional Car Wrap Generator"
         description="Create stunning custom Tesla wraps with AI-powered design technology. Professional vehicle wrap designer with 2D and 3D preview. Design your dream Tesla wrap today."
         keywords="tesla custom wraps, tesla wrap design, car wrap designer, vehicle wrap, AI wrap design, custom car wrap, tesla wrap generator, professional wrap design, 3D wrap preview"
+        url="https://teslacustomwraps.top/"
       />
       <div className={`min-h-screen flex flex-col ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'} font-light transition-colors duration-300`}>
         <Header />
@@ -230,12 +231,18 @@ function App() {
                       onChange={handleFileUpload}
                     />
                     
-                    {originalImage ? (
-                      <div className={`relative aspect-video w-full rounded overflow-hidden ${isDark ? 'bg-black' : 'bg-zinc-200'}`}>
+                  {originalImage ? (
+                    <div className={`relative w-full rounded overflow-hidden flex items-center justify-center ${isDark ? 'bg-black' : 'bg-zinc-200'}`} style={{ minHeight: '200px', maxHeight: '400px' }}>
                         <img 
                           src={`data:image/png;base64,${originalImage.includes('base64,') ? originalImage.split('base64,')[1] : originalImage}`} 
-                          className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity" 
-                          alt="Tesla vehicle wrap template preview - Custom wrap design template" 
+                          className="object-contain opacity-80 group-hover:opacity-100 transition-opacity p-2" 
+                          alt="Tesla vehicle wrap template preview - Custom wrap design template"
+                          style={{ 
+                            maxWidth: '100%', 
+                            maxHeight: '100%',
+                            width: 'auto',
+                            height: 'auto'
+                          }}
                         />
                         <div className={`absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${isDark ? 'bg-black/40' : 'bg-white/60'}`}>
                           <span className={`text-sm font-medium tracking-wide uppercase ${isDark ? 'text-white' : 'text-black'}`}>
@@ -368,7 +375,7 @@ function App() {
                 />
 
                 {viewMode === '2D' ? (
-                  <div className="w-full h-full flex items-center justify-center p-8 overflow-auto z-10">
+                  <div className="w-full h-full flex items-center justify-center p-4 lg:p-8 z-10">
                     {!originalImage && !generatedImage && (
                       <div className={`text-center select-none ${isDark ? 'text-zinc-700' : 'text-zinc-400'}`}>
                         <h3 className="text-2xl font-thin tracking-wider mb-2">{t('main.noSignal')}</h3>
@@ -388,17 +395,33 @@ function App() {
                     )}
 
                     {generatedImage ? (
-                      <img 
-                        src={generatedImage} 
-                        alt="AI-generated Tesla custom wrap design - Professional vehicle wrap with custom graphics and design" 
-                        className={`max-w-full max-h-full object-contain shadow-2xl ${isDark ? 'shadow-black/80' : 'shadow-zinc-800/30'}`}
-                      />
+                      <div className="w-full h-full flex items-center justify-center">
+                        <img 
+                          src={generatedImage} 
+                          alt="AI-generated Tesla custom wrap design - Professional vehicle wrap with custom graphics and design" 
+                          className={`object-contain shadow-2xl ${isDark ? 'shadow-black/80' : 'shadow-zinc-800/30'}`}
+                          style={{ 
+                            maxWidth: '100%', 
+                            maxHeight: '100%',
+                            width: 'auto',
+                            height: 'auto'
+                          }}
+                        />
+                      </div>
                     ) : originalImage ? (
-                      <img 
-                        src={`data:image/png;base64,${originalImage.includes('base64,') ? originalImage.split('base64,')[1] : originalImage}`} 
-                        alt="Tesla vehicle wrap template - Base template for custom wrap design" 
-                        className="max-w-full max-h-full object-contain opacity-40 grayscale blur-[0.5px]"
-                      />
+                      <div className="w-full h-full flex items-center justify-center">
+                        <img 
+                          src={`data:image/png;base64,${originalImage.includes('base64,') ? originalImage.split('base64,')[1] : originalImage}`} 
+                          alt="Tesla vehicle wrap template - Base template for custom wrap design" 
+                          className="object-contain opacity-40 grayscale blur-[0.5px]"
+                          style={{ 
+                            maxWidth: '100%', 
+                            maxHeight: '100%',
+                            width: 'auto',
+                            height: 'auto'
+                          }}
+                        />
+                      </div>
                     ) : null}
                   </div>
                 ) : (

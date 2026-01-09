@@ -13,8 +13,8 @@ export const SEO: React.FC<SEOProps> = ({
   title = 'Tesla Custom Wraps - AI-Powered Vehicle Wrap Design',
   description = 'Create stunning custom Tesla wraps with AI-powered design technology. Professional vehicle wrap designer with 2D and 3D preview.',
   keywords = 'tesla custom wraps, tesla wrap design, car wrap designer, vehicle wrap, AI wrap design',
-  image = 'https://teslacustomwraps.com/og-image.jpg',
-  url = 'https://teslacustomwraps.com/'
+  image = 'https://teslacustomwraps.top/og-image.jpg',
+  url = 'https://teslacustomwraps.top/'
 }) => {
   const { language } = useLanguage();
 
