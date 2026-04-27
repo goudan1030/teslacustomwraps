@@ -1,8 +1,12 @@
 import { base64ToDataUrl } from '../utils/image';
 import { t } from '../utils/i18n';
 
-const CHAT_GENERATE_ENDPOINT = '/api/generate-wrap';
-const NANO_BANANA_EDIT_ENDPOINT = '/api/nano-banana-edit';
+const CHAT_GENERATE_ENDPOINT = import.meta.env.DEV
+  ? '/api/generate-wrap'
+  : '/.netlify/functions/generate-wrap';
+const NANO_BANANA_EDIT_ENDPOINT = import.meta.env.DEV
+  ? '/api/nano-banana-edit'
+  : '/.netlify/functions/generate-wrap?route=nano-banana-edit';
 const GPT_IMAGE_MODELS = ['gpt-image-2-all', 'gpt-image-2-vip'] as const;
 const NANO_BANANA_MODEL = 'nano-banana-2';
 const MAX_RATE_LIMIT_RETRIES = 4;

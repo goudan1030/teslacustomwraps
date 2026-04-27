@@ -102,7 +102,9 @@ export const handler = async (request) => {
   }
 
   const { model, messages } = parsedBody;
-  const isNanoBananaRequest = request.path?.includes('/api/nano-banana-edit');
+  const isNanoBananaRequest =
+    request.path?.includes('/api/nano-banana-edit') ||
+    request.queryStringParameters?.route === 'nano-banana-edit';
 
   if (isNanoBananaRequest) {
     const hasContents = Array.isArray(parsedBody.contents) && parsedBody.contents.length > 0;
