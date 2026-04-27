@@ -103,7 +103,7 @@ const buildChatBody = (model: typeof GPT_IMAGE_MODELS[number], imageDataUrl: str
       ],
     },
   ],
-  ...(model === 'gpt-image-2-vip' ? { size: '2048x2048' } : {}),
+  ...(model === 'gpt-image-2-vip' ? { size: '1024x1024' } : {}),
 });
 
 const buildNanoBananaBody = (imageBase64: string, userPrompt: string) => ({
@@ -126,7 +126,7 @@ const buildNanoBananaBody = (imageBase64: string, userPrompt: string) => ({
     responseModalities: ['IMAGE'],
     imageConfig: {
       aspectRatio: '1:1',
-      imageSize: '2K',
+      imageSize: '1K',
     },
   },
 });
@@ -150,14 +150,23 @@ const requestImage = async (
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt <= MAX_RATE_LIMIT_RETRIES; attempt += 1) {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        throw error;
+      }
+
+      throw new ApiYiRequestError(t('main.generationNetworkFailed'), true);
+    }
 
     if (import.meta.env.DEV) {
       console.log(`[${label}] response status:`, response.status);

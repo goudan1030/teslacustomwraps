@@ -59,6 +59,7 @@ export const translations = {
       generationRequestFailed: "We couldn’t complete your design. Please try again.",
       generationNoImage: "We didn’t receive a valid image. Please try again.",
       generationTimeout: "That took too long. Please try again.",
+      generationNetworkFailed: "The generation request was interrupted. Please try again.",
       allServicesBusy: "Design services are busy right now. Please try again in a moment.",
       // Auth
       signIn: 'Sign In',
@@ -141,6 +142,7 @@ export const translations = {
       generationRequestFailed: "设计生成未成功，请稍后再试。",
       generationNoImage: "未收到有效图片，请重试。",
       generationTimeout: "处理超时，请重试。",
+      generationNetworkFailed: "生成请求中断，请重试。",
       allServicesBusy: "设计服务暂时繁忙，请稍后再试。",
       // Auth
       signIn: '登录',

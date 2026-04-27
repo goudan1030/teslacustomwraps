@@ -9,6 +9,7 @@ const buildJsonResponse = (statusCode, payload) => ({
   statusCode,
   headers: {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
   },
   body: JSON.stringify(payload),
 });
@@ -19,11 +20,14 @@ const extractImagePayload = (data) => {
   if (typeof content === 'string' && content.trim()) {
     const markdownMatch = content.match(/!\[.*?\]\((.*?)\)/);
     const urlMatch = content.match(/(https?:\/\/[^\s)]+)/);
+    const imageUrl = markdownMatch?.[1] || urlMatch?.[1] || null;
 
-    return {
-      content,
-      imageUrl: markdownMatch?.[1] || urlMatch?.[1] || null,
-    };
+    if (imageUrl) {
+      return {
+        content,
+        imageUrl,
+      };
+    }
   }
 
   const imageUrl = data?.data?.[0]?.url || null;
