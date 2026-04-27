@@ -1,0 +1,6 @@
+# Reduce indexer load
+node_modules
+dist
+.git
+**/.DS_Store
+._*

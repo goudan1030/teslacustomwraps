@@ -4,11 +4,43 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    const apiYiKey = env.APIYI_API_KEY || env.VITE_APIYI_API_KEY;
+    const configureApiYiProxy = (proxy: any) => {
+      proxy.on('proxyReq', (proxyReq: any) => {
+        proxyReq.setHeader('Connection', 'keep-alive');
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Accept', 'application/json');
+        if (apiYiKey) {
+          proxyReq.setHeader('Authorization', `Bearer ${apiYiKey}`);
+        }
+      });
+    };
+
     return {
       server: {
         port: 3000,
         host: '0.0.0.0',
         proxy: {
+          '/api/generate-wrap': {
+            target: 'https://vip.apiyi.com',
+            changeOrigin: true,
+            secure: false,
+            rewrite: () => '/v1/chat/completions/',
+            configure: configureApiYiProxy,
+          },
+          '/v1/chat/completions': {
+            target: 'https://vip.apiyi.com',
+            changeOrigin: true,
+            secure: false,
+            configure: configureApiYiProxy,
+          },
+          '/api/nano-banana-edit': {
+            target: 'https://vip.apiyi.com',
+            changeOrigin: true,
+            secure: false,
+            rewrite: () => '/v1beta/models/gemini-3.1-flash-image-preview:generateContent',
+            configure: configureApiYiProxy,
+          },
           // Proxy Hugging Face API to avoid CORS issues
           // Note: Hugging Face now uses router.huggingface.co instead of api-inference.huggingface.co
           '/api/huggingface': {
@@ -47,8 +79,8 @@ export default defineConfig(({ mode }) => {
                 }
               });
             }
-          }
-        }
+          },
+        },
       },
       plugins: [react()],
       define: {
@@ -59,6 +91,8 @@ export default defineConfig(({ mode }) => {
         'import.meta.env.VITE_GA_MEASUREMENT_ID': JSON.stringify(env.VITE_GA_MEASUREMENT_ID),
         'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(env.VITE_GOOGLE_CLIENT_ID),
         'import.meta.env.VITE_GOOGLE_CLIENT_SECRET': JSON.stringify(env.VITE_GOOGLE_CLIENT_SECRET),
+        'import.meta.env.VITE_APP_ENV': JSON.stringify(env.VITE_APP_ENV || mode),
+        'import.meta.env.VITE_APP_BASE_URL': JSON.stringify(env.VITE_APP_BASE_URL),
       },
       resolve: {
         alias: {

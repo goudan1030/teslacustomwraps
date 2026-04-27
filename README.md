@@ -4,9 +4,9 @@
 
 # Tesla Custom Wraps
 
-一个专业的AI驱动车辆贴膜设计工具，使用Google Gemini 2.5 Flash Image模型生成设计，并支持2D和3D预览。专注于为Tesla车型创建定制化的贴膜设计。
+一个专业的 AI 驱动车辆贴膜设计工具，默认走可配置的图像编辑 API，并支持 2D 与 3D 预览。专注于为 Tesla 车型创建定制化的贴膜设计。
 
-A professional AI-powered vehicle wrap designer that uses Google Gemini 2.5 Flash Image model to generate designs with 2D and 3D preview support.
+A professional AI-powered vehicle wrap designer with a configurable image-editing API by default, plus 2D and 3D previews.
 
 ## 功能特性 / Features
 
@@ -32,11 +32,16 @@ npm install
 
 创建 `.env.local` 文件并配置以下变量：
 
-Create `.env.local` file and configure the following variables:
+Create `.env.local` (copy [`.env.example`](./.env.example) as a starting point) and configure the following variables:
 
 ```env
-# Google Gemini API Key (必需 / Required)
-GEMINI_API_KEY=your_gemini_api_key_here
+# Server-side APIYi key (required)
+# Do not use a VITE_ prefix, otherwise the key can leak into the client bundle.
+APIYI_API_KEY=your_key_here
+
+# Optional server-side overrides
+# APIYI_BASE_URL=https://vip.apiyi.com
+# APIYI_MODEL=gpt-image-2-all
 
 # Google Analytics Measurement ID (可选 / Optional - 已默认配置为 G-LJLJZMLN6G)
 # 如需使用其他 GA ID，取消注释并修改下面的值
@@ -78,6 +83,8 @@ npm run dev
 应用将在 `http://localhost:3000` 启动
 
 The app will start at `http://localhost:3000`
+
+The frontend now calls `/api/generate-wrap`. In local development, Vite proxies that route and injects the server-side `APIYI_API_KEY`. In Netlify production, the same route is handled by a Netlify Function, so the browser never receives the key.
 
 ## 项目结构 / Project Structure
 

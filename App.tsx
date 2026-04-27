@@ -14,6 +14,7 @@ import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
 import { useAuth } from './contexts/AuthContext';
 import { trackEvent } from './utils/analytics';
+import { FREE_GENERATION_LIMIT, consumeGeneration, getRemainingGenerations } from './utils/usageLimits';
 
 // Icons - Refined for minimal look
 const UploadIcon = () => {
@@ -46,7 +47,7 @@ const DownloadIcon = () => (
 function App() {
   const { theme } = useTheme();
   const { t, language } = useLanguage();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, signIn, user } = useAuth();
   
   const [prompt, setPrompt] = useState('USA police car theme, high contrast black and white, sleek modern typography');
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -57,6 +58,7 @@ function App() {
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleModel | null>(null);
   const [uploadMode, setUploadMode] = useState<'select' | 'upload'>('select'); // 'select' for vehicle selection, 'upload' for file upload
+  const [remainingGenerations, setRemainingGenerations] = useState(0);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,6 +66,10 @@ function App() {
   useEffect(() => {
     trackEvent('page_view', 'engagement', 'home');
   }, []);
+
+  useEffect(() => {
+    setRemainingGenerations(getRemainingGenerations(user?.id));
+  }, [user?.id]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -106,6 +112,18 @@ function App() {
       return;
     }
 
+    if (!isAuthenticated || !user) {
+      setErrorMsg(t('main.signInRequiredForFreeGenerations'));
+      trackEvent('generate_design_blocked', 'auth', 'sign_in_required');
+      return;
+    }
+
+    if (remainingGenerations <= 0) {
+      setErrorMsg(t('main.freeGenerationsExhausted'));
+      trackEvent('generate_design_blocked', 'quota', 'free_limit_reached');
+      return;
+    }
+
     setState(AppState.GENERATING);
     setErrorMsg(null);
     setViewMode('2D');
@@ -118,8 +136,10 @@ function App() {
         : originalImage;
 
       const resultUrl = await generateWrapDesign(base64Data, prompt);
+      const remaining = consumeGeneration(user.id);
       
       setGeneratedImage(resultUrl);
+      setRemainingGenerations(remaining);
       setState(AppState.SUCCESS);
       trackEvent('generate_design_success', 'user_action', 'design_generation_complete');
     } catch (err: any) {
@@ -135,7 +155,26 @@ function App() {
     trackEvent('view_mode_change', 'user_action', mode);
   };
 
+  const handleSignInForGeneration = async () => {
+    try {
+      await signIn();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const isDark = theme === 'dark';
+  const canGenerate = Boolean(originalImage) && isAuthenticated && remainingGenerations > 0;
+
+  const generateButtonLabel = () => {
+    if (state === AppState.GENERATING) return t('main.processing');
+    if (!originalImage) {
+      return uploadMode === 'select' ? t('main.generateDesignNeedVehicle') : t('main.generateDesignNeedUpload');
+    }
+    if (!isAuthenticated) return t('main.signInToGenerate');
+    if (remainingGenerations <= 0) return t('main.generateDesignNoQuota');
+    return t('main.generateDesign');
+  };
 
   return (
     <>
@@ -286,16 +325,54 @@ function App() {
                   onChange={setPrompt} 
                   disabled={state === AppState.GENERATING}
                 />
+
+                <div className={`rounded border p-4 space-y-3 ${
+                  isDark ? 'border-zinc-800 bg-zinc-900/30' : 'border-zinc-300 bg-zinc-50'
+                }`}>
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${
+                        isDark ? 'text-zinc-400' : 'text-zinc-600'
+                      }`}>
+                        {t('main.freeQuota')}
+                      </p>
+                      <p className={`mt-2 text-sm ${isDark ? 'text-white' : 'text-black'}`}>
+                        {isAuthenticated
+                          ? `${t('main.freeQuotaRemaining')} ${remainingGenerations}/${FREE_GENERATION_LIMIT}`
+                          : `${FREE_GENERATION_LIMIT} ${t('main.freeQuota')}`}
+                      </p>
+                    </div>
+                    {isAuthenticated && (
+                      <div className={`text-2xl font-semibold tabular-nums ${
+                        isDark ? 'text-white' : 'text-black'
+                      }`}>
+                        {remainingGenerations}
+                      </div>
+                    )}
+                  </div>
+
+                  <p className={`text-xs leading-relaxed ${
+                    isDark ? 'text-zinc-500' : 'text-zinc-600'
+                  }`}>
+                    {isAuthenticated ? t('main.freeQuotaHintLoggedIn') : t('main.freeQuotaHintLoggedOut')}
+                  </p>
+
+                  {!isAuthenticated && (
+                    <Button type="button" variant="secondary" onClick={handleSignInForGeneration}>
+                      {t('main.signInToGenerate')}
+                    </Button>
+                  )}
+                </div>
                 
                 <div className="mt-8">
                   <Button 
                     onClick={handleGenerate}
                     className="w-full" 
                     isLoading={state === AppState.GENERATING}
-                    disabled={!originalImage}
+                    disabled={!canGenerate}
                     variant="primary"
                   >
-                    {state === AppState.GENERATING ? t('main.processing') : t('main.generateDesign')}
+                    {generateButtonLabel()}
                   </Button>
                   {errorMsg && (
                     <div className={`mt-4 p-4 rounded text-xs font-mono ${
@@ -303,7 +380,7 @@ function App() {
                         ? 'bg-red-950/20 border border-red-900/50 text-red-400' 
                         : 'bg-red-50 border border-red-200 text-red-600'
                     }`}>
-                      {t('main.error')}: {errorMsg}
+                      {errorMsg}
                     </div>
                   )}
                 </div>
@@ -378,9 +455,13 @@ function App() {
                 {viewMode === '2D' ? (
                   <div className="w-full h-full flex items-center justify-center p-4 lg:p-8 z-10">
                     {!originalImage && !generatedImage && (
-                      <div className={`text-center select-none ${isDark ? 'text-zinc-700' : 'text-zinc-400'}`}>
-                        <h3 className="text-2xl font-thin tracking-wider mb-2">{t('main.noSignal')}</h3>
-                        <p className="text-xs uppercase tracking-widest">{t('main.awaitingTemplate')}</p>
+                      <div className={`text-center select-none px-4 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                        <h3 className="text-2xl font-thin tracking-wider mb-2">
+                          {uploadMode === 'select' ? t('main.previewSelectVehicleTitle') : t('main.previewNeedUploadTitle')}
+                        </h3>
+                        <p className={`text-xs max-w-md mx-auto leading-relaxed ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                          {uploadMode === 'select' ? t('main.previewSelectVehicleHint') : t('main.previewNeedUploadHint')}
+                        </p>
                       </div>
                     )}
 
@@ -430,12 +511,15 @@ function App() {
                   <div className="w-full h-full relative z-10">
                     <ThreeDPreview textureUrl={generatedImage || (originalImage ? base64ToDataUrl(originalImage) : null)} />
                     {!generatedImage && !originalImage && (
-                      <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                        <div className={`backdrop-blur px-6 py-3 rounded border ${
+                      <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none px-4">
+                        <div className={`backdrop-blur px-6 py-4 rounded border max-w-sm text-center ${
                           isDark ? 'bg-black/80 border-zinc-800' : 'bg-white/80 border-zinc-300'
                         }`}>
-                          <p className={`text-xs tracking-widest uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
-                            {t('main.loadDataToVisualize')}
+                          <p className={`text-sm font-thin tracking-wider mb-1 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
+                            {uploadMode === 'select' ? t('main.previewSelectVehicleTitle') : t('main.previewNeedUploadTitle')}
+                          </p>
+                          <p className={`text-xs leading-relaxed ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
+                            {uploadMode === 'select' ? t('main.previewSelectVehicleHint') : t('main.previewNeedUploadHint')}
                           </p>
                         </div>
                       </div>

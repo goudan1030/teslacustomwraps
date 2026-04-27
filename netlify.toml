@@ -1,0 +1,13 @@
+[build]
+  publish = "dist"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/generate-wrap"
+  to = "/.netlify/functions/generate-wrap"
+  status = 200
+
+[[redirects]]
+  from = "/api/nano-banana-edit"
+  to = "/.netlify/functions/generate-wrap"
+  status = 200

@@ -1,20 +1,18 @@
 // Free image generation service using Hugging Face Inference API
 // Uses Stable Diffusion models for free image generation
 
+import { t } from '../utils/i18n';
+
 // Get API keys from environment - check both possible sources
 const HUGGINGFACE_API_KEY = (import.meta.env.VITE_HUGGINGFACE_API_KEY || '').trim();
-// Hugging Face has changed their API endpoint - use the new router endpoint
-const HUGGINGFACE_API_URL = 'https://router.huggingface.co';
 
 // Fallback to Replicate if Hugging Face fails (also has free tier)
 const REPLICATE_API_TOKEN = (import.meta.env.VITE_REPLICATE_API_TOKEN || '').trim();
 
-// Debug on load
-if (typeof window !== 'undefined') {
-  console.log('API Keys loaded:', {
-    huggingface: HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : 'NOT SET',
-    replicate: REPLICATE_API_TOKEN ? `${REPLICATE_API_TOKEN.substring(0, 10)}...` : 'NOT SET',
-    env_keys: Object.keys(import.meta.env).filter(k => k.includes('HUGGING') || k.includes('REPLICATE'))
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  console.log('Free image: keys present:', {
+    huggingface: Boolean(HUGGINGFACE_API_KEY),
+    replicate: Boolean(REPLICATE_API_TOKEN),
   });
 }
 
@@ -23,44 +21,40 @@ export const generateWrapDesign = async (
   userPrompt: string
 ): Promise<string> => {
   try {
-    // Debug: Check if API keys are loaded
-    console.log('Free Image Service - Checking API keys:');
-    console.log('HUGGINGFACE_API_KEY length:', HUGGINGFACE_API_KEY ? HUGGINGFACE_API_KEY.length : 0);
-    console.log('HUGGINGFACE_API_KEY preview:', HUGGINGFACE_API_KEY ? `${HUGGINGFACE_API_KEY.substring(0, 10)}...` : 'NOT SET');
-    console.log('REPLICATE_API_TOKEN:', REPLICATE_API_TOKEN ? `${REPLICATE_API_TOKEN.substring(0, 10)}...` : 'NOT SET');
-    console.log('All env vars:', Object.keys(import.meta.env).filter(k => k.includes('API')));
-    
     // Try Hugging Face first (completely free for some models)
     if (HUGGINGFACE_API_KEY && HUGGINGFACE_API_KEY.length > 0) {
-      console.log('Attempting Hugging Face image generation...');
+      if (import.meta.env.DEV) console.log('Attempting Hugging Face image generation...');
       try {
         return await generateWithHuggingFace(imageBase64, userPrompt);
       } catch (error) {
-        console.warn('Hugging Face failed, trying Replicate:', error);
+        if (import.meta.env.DEV) console.warn('Hugging Face failed, trying Replicate:', error);
         // Fall through to Replicate
       }
-    } else {
-      console.warn('Hugging Face API key not found or empty');
     }
 
     // Try Replicate as fallback (has free tier)
     if (REPLICATE_API_TOKEN && REPLICATE_API_TOKEN.trim() !== '') {
-      console.log('Attempting Replicate image generation...');
+      if (import.meta.env.DEV) console.log('Attempting Replicate image generation...');
       try {
         return await generateWithReplicate(imageBase64, userPrompt);
       } catch (error) {
-        console.warn('Replicate failed:', error);
+        if (import.meta.env.DEV) console.warn('Replicate failed:', error);
       }
-    } else {
-      console.warn('Replicate API token not found or empty');
     }
 
-    // If no API keys provided, throw helpful error
-    throw new Error(`所有AI服务都无法使用。\n\n当前状态：\n- Hugging Face: ${HUGGINGFACE_API_KEY ? 'API Key已配置，但所有模型都不可用(410错误)' : '未配置'}\n- Replicate: ${REPLICATE_API_TOKEN ? '已配置' : '未配置'}\n- Gemini: 模型不存在(404错误)\n\n建议：\n1. 等待一段时间后重试（可能是临时服务问题）\n2. 或者配置OpenAI API（付费但稳定）\n3. 检查网络连接是否正常`);
-
+    throw new Error(t('main.allServicesBusy'));
   } catch (error: any) {
-    console.error("Free Image Service Error:", error);
-    throw new Error(error.message || "Failed to generate design with free service.");
+    if (import.meta.env.DEV) console.error('Free Image Service error:', error);
+    const known = [
+      t('main.allServicesBusy'),
+      t('main.generationRequestFailed'),
+      t('main.generationServiceUnavailable'),
+      t('main.generationNoImage'),
+    ];
+    if (error?.message && known.includes(error.message)) {
+      throw error;
+    }
+    throw new Error(t('main.generationRequestFailed'));
   }
 };
 
@@ -81,10 +75,10 @@ const generateWithHuggingFace = async (
   
   for (const model of models) {
     try {
-      console.log(`Trying Hugging Face model: ${model}`);
+      if (import.meta.env.DEV) console.log(`Trying Hugging Face model: ${model}`);
       return await tryHuggingFaceModel(model, imageBase64, userPrompt);
     } catch (error: any) {
-      console.warn(`Model ${model} failed:`, error.message);
+      if (import.meta.env.DEV) console.warn(`Model ${model} failed:`, error?.message);
       lastError = error;
       // If 410 or 404, try next model
       if (error.response?.status === 410 || error.response?.status === 404 || 
@@ -93,12 +87,12 @@ const generateWithHuggingFace = async (
         continue; // Try next model
       }
       // Other errors (like 503, 401), throw immediately
-      throw error;
+      throw new Error(t('main.generationRequestFailed'));
     }
   }
   
   // All models failed
-  throw lastError || new Error('所有Hugging Face模型都不可用。请稍后重试或使用其他AI服务。');
+  throw new Error(t('main.generationRequestFailed'));
 };
 
 const tryHuggingFaceModel = async (
@@ -116,11 +110,10 @@ clean production-ready layout, high quality, detailed design, vector art style.`
   // New Hugging Face router API endpoint
   const proxyUrl = `/api/huggingface/models/${model}`;
   
-  console.log('Calling Hugging Face via proxy:', proxyUrl);
-  console.log('API Key available:', HUGGINGFACE_API_KEY ? `YES (${HUGGINGFACE_API_KEY.length} chars)` : 'NO');
-  
+  if (import.meta.env.DEV) console.log('Calling Hugging Face via proxy:', proxyUrl);
+
   if (!HUGGINGFACE_API_KEY || HUGGINGFACE_API_KEY.length === 0) {
-    throw new Error('Hugging Face API key is not configured. Please set VITE_HUGGINGFACE_API_KEY in .env.local and restart the server.');
+    throw new Error(t('main.generationServiceUnavailable'));
   }
   
   const response = await fetch(proxyUrl, {
@@ -145,7 +138,7 @@ clean production-ready layout, high quality, detailed design, vector art style.`
     if (response.status === 503) {
       // Model is loading, wait and retry
       const estimatedTime = errorData.estimated_time || 20;
-      console.log(`Model ${model} is loading, waiting ${estimatedTime}s...`);
+      if (import.meta.env.DEV) console.log(`Model ${model} is loading, waiting ${estimatedTime}s...`);
       await new Promise(resolve => setTimeout(resolve, Math.min(estimatedTime * 1000, 30000))); // Max 30s
       return tryHuggingFaceModel(model, imageBase64, userPrompt); // Retry same model
     }
@@ -174,7 +167,7 @@ clean production-ready layout, high quality, detailed design, vector art style.`
         const base64 = reader.result.split(',')[1];
         resolve(`data:image/png;base64,${base64}`);
       } else {
-        reject(new Error('Failed to convert image'));
+        reject(new Error(t('main.generationNoImage')));
       }
     };
     reader.onerror = reject;
@@ -211,8 +204,8 @@ clean production-ready layout, high quality, detailed design.`;
   });
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Replicate API error: ${response.status}`);
+    await response.json().catch(() => ({}));
+    throw new Error(t('main.generationRequestFailed'));
   }
 
   const prediction = await response.json();
@@ -233,7 +226,7 @@ clean production-ready layout, high quality, detailed design.`;
     status = result.status;
     
     if (status === 'failed' || status === 'canceled') {
-      throw new Error(result.error || 'Prediction failed');
+      throw new Error(t('main.generationRequestFailed'));
     }
   }
 
@@ -249,7 +242,7 @@ clean production-ready layout, high quality, detailed design.`;
           const base64 = reader.result.split(',')[1];
           resolve(`data:image/png;base64,${base64}`);
         } else {
-          reject(new Error('Failed to convert image'));
+          reject(new Error(t('main.generationNoImage')));
         }
       };
       reader.onerror = reject;
@@ -257,5 +250,5 @@ clean production-ready layout, high quality, detailed design.`;
     });
   }
 
-  throw new Error('No output from Replicate');
+  throw new Error(t('main.generationNoImage'));
 };

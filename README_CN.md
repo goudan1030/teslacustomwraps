@@ -7,7 +7,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8.2-blue?style=for-the-badge&logo=typescript)
 ![DeepSeek AI](https://img.shields.io/badge/AI-DeepSeek-green?style=for-the-badge)
 
-一个专业的AI驱动车辆贴膜设计工具，使用DeepSeek AI模型生成设计，并支持2D和3D预览。专注于为Tesla车型创建定制化的贴膜设计。
+一个专业的 AI 驱动车辆贴膜设计工具，使用可配置的图像编辑 API，并支持 2D 与 3D 预览。专注于为 Tesla 车型创建定制化的贴膜设计。
 
 [English README](./README.md) | [中文文档](#)
 
@@ -97,18 +97,22 @@
 
 3. **配置环境变量**
    
-   创建 `.env.local` 文件（如果不存在），并添加以下配置：
+   创建 `.env.local`（可将 [`.env.example`](./.env.example) 复制为 `.env.local` 后填写），并添加以下配置：
    ```env
-   # DeepSeek API Key (必需)
-   VITE_DEEPSEEK_API_KEY=sk-b2ec3f0aab3c40118bcb84f5f850ace3
-   
+   # 服务端 APIYi 密钥（必需；不要使用 VITE_ 前缀，避免泄露到浏览器）
+   APIYI_API_KEY=your_key_here
+
+   # 可选：服务端覆盖项
+   # APIYI_BASE_URL=https://vip.apiyi.com
+   # APIYI_MODEL=gpt-image-2-all
+
    # Google Analytics Measurement ID (可选)
    VITE_GA_MEASUREMENT_ID=G-LJLJZMLN6G
-   
+
    # Google OAuth 2.0 Client ID (可选)
    VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
-   
-   # Google OAuth 2.0 Client Secret (可选)
+
+   # Google OAuth 2.0 Client Secret (可选，一般仅服务端需要)
    VITE_GOOGLE_CLIENT_SECRET=your_google_client_secret_here
    ```
 
@@ -120,6 +124,8 @@
 5. **访问应用**
    
    打开浏览器访问：`http://localhost:3000`
+
+   前端现在统一请求 `/api/generate-wrap`。本地开发时由 Vite 代理在服务端注入 `APIYI_API_KEY`；部署到 Netlify 后由 Netlify Function 读取同名环境变量并转发请求，因此浏览器不会接触到密钥。
 
 ## 📁 项目结构
 
@@ -316,8 +322,9 @@ minimal white logos, high contrast design
 2. 在 [Netlify](https://www.netlify.com/) 上导入项目
 3. 构建命令：`npm run build`
 4. 发布目录：`dist`
-5. 配置环境变量
-6. 部署
+5. Functions 目录使用默认配置：`netlify/functions`
+6. 在 Netlify 后台配置环境变量：`APIYI_API_KEY`
+7. 部署
 
 ### 自托管部署
 
