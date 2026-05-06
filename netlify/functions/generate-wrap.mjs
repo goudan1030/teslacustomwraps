@@ -1,7 +1,15 @@
-const APIYI_BASE_URL = process.env.APIYI_BASE_URL || 'https://vip.apiyi.com';
+const normalizeApiYiBaseUrl = (baseUrl) => {
+  if (!baseUrl || baseUrl.includes('vip.apiyi.com')) {
+    return 'https://api.apiyi.com';
+  }
+
+  return baseUrl.replace(/\/+$/, '');
+};
+
+const APIYI_BASE_URL = normalizeApiYiBaseUrl(process.env.APIYI_BASE_URL);
 const APIYI_MODEL = process.env.APIYI_MODEL || 'gpt-image-2-all';
 const NANO_BANANA_MODEL = process.env.APIYI_NANO_BANANA_MODEL || 'gemini-3.1-flash-image-preview';
-const MAX_RATE_LIMIT_RETRIES = 4;
+const MAX_RATE_LIMIT_RETRIES = 1;
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -74,6 +82,47 @@ const getRetryDelayMs = (response, message, attempt) => {
   return Math.min(750 * 2 ** attempt, 8_000);
 };
 
+const parseDataUrl = (dataUrl) => {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) {
+    return {
+      mimeType: 'image/png',
+      buffer: Buffer.from(dataUrl, 'base64'),
+    };
+  }
+
+  return {
+    mimeType: match[1],
+    buffer: Buffer.from(match[2], 'base64'),
+  };
+};
+
+const extractImageEditRequest = (body) => {
+  if (typeof body?.prompt === 'string' && typeof body?.image === 'string') {
+    return {
+      model: body.model || APIYI_MODEL,
+      prompt: body.prompt,
+      image: body.image,
+      size: body.size,
+    };
+  }
+
+  const content = body?.messages?.[0]?.content;
+  if (!Array.isArray(content)) return null;
+
+  const prompt = content.find((part) => part?.type === 'text')?.text;
+  const image = content.find((part) => part?.type === 'image_url')?.image_url?.url;
+
+  if (typeof prompt !== 'string' || typeof image !== 'string') return null;
+
+  return {
+    model: body.model || APIYI_MODEL,
+    prompt,
+    image,
+    size: body.size,
+  };
+};
+
 export const handler = async (request) => {
   if (request.httpMethod === 'OPTIONS') {
     return {
@@ -101,41 +150,55 @@ export const handler = async (request) => {
     return buildJsonResponse(400, { error: 'Request body must be valid JSON.' });
   }
 
-  const { model, messages } = parsedBody;
   const isNanoBananaRequest =
     request.path?.includes('/api/nano-banana-edit') ||
     request.queryStringParameters?.route === 'nano-banana-edit';
+  const imageEditRequest = !isNanoBananaRequest ? extractImageEditRequest(parsedBody) : null;
 
   if (isNanoBananaRequest) {
     const hasContents = Array.isArray(parsedBody.contents) && parsedBody.contents.length > 0;
     if (!hasContents) {
       return buildJsonResponse(400, { error: 'Missing required field: contents.' });
     }
-  } else if (!model || !Array.isArray(messages) || messages.length === 0) {
-    return buildJsonResponse(400, { error: 'Missing required fields: model and messages.' });
+  } else if (!imageEditRequest) {
+    return buildJsonResponse(400, { error: 'Missing required fields: prompt and image.' });
   }
 
   try {
     for (let attempt = 0; attempt <= MAX_RATE_LIMIT_RETRIES; attempt += 1) {
       const upstreamUrl = isNanoBananaRequest
         ? `${APIYI_BASE_URL}/v1beta/models/${NANO_BANANA_MODEL}:generateContent`
-        : `${APIYI_BASE_URL}/v1/chat/completions/`;
-      const upstreamBody = isNanoBananaRequest
-        ? parsedBody
-        : {
-            model: model || APIYI_MODEL,
-            messages,
-            ...(parsedBody.size ? { size: parsedBody.size } : {}),
-          };
+        : `${APIYI_BASE_URL}/v1/images/edits`;
+
+      let upstreamBody;
+      let headers = {
+        Accept: 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      };
+
+      if (isNanoBananaRequest) {
+        upstreamBody = JSON.stringify(parsedBody);
+        headers = {
+          ...headers,
+          'Content-Type': 'application/json',
+        };
+      } else {
+        const { mimeType, buffer } = parseDataUrl(imageEditRequest.image);
+        const formData = new FormData();
+        formData.append('model', imageEditRequest.model);
+        formData.append('prompt', imageEditRequest.prompt);
+        formData.append('response_format', 'url');
+        formData.append('image[]', new Blob([buffer], { type: mimeType }), 'template.png');
+        if (imageEditRequest.size) {
+          formData.append('size', imageEditRequest.size);
+        }
+        upstreamBody = formData;
+      }
 
       const upstreamResponse = await fetch(upstreamUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(upstreamBody),
+        headers,
+        body: upstreamBody,
       });
 
       const data = await upstreamResponse.json().catch(() => null);

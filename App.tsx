@@ -9,7 +9,6 @@ import { fileToBase64, base64ToDataUrl } from './utils/image';
 import { generateWrapDesign } from './services/aiServiceManager';
 import { AppState } from './types';
 import { VehicleModel } from './types/vehicle';
-import { ThreeDPreview } from './components/ThreeDPreview';
 import { useTheme } from './contexts/ThemeContext';
 import { useLanguage } from './contexts/LanguageContext';
 import { useAuth } from './contexts/AuthContext';
@@ -25,18 +24,6 @@ const UploadIcon = () => {
     </svg>
   );
 };
-
-const PhotoIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
-
-const CubeIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
-);
 
 const DownloadIcon = () => (
   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +41,6 @@ function App() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [state, setState] = useState<AppState>(AppState.IDLE);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'2D' | '3D'>('2D');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
   const [selectedVehicle, setSelectedVehicle] = useState<VehicleModel | null>(null);
   const [uploadMode, setUploadMode] = useState<'select' | 'upload'>('select'); // 'select' for vehicle selection, 'upload' for file upload
@@ -126,7 +112,6 @@ function App() {
 
     setState(AppState.GENERATING);
     setErrorMsg(null);
-    setViewMode('2D');
 
     trackEvent('generate_design', 'user_action', 'design_generation_start');
 
@@ -148,11 +133,6 @@ function App() {
       setState(AppState.ERROR);
       trackEvent('generate_design_error', 'error', err.message || 'unknown_error');
     }
-  };
-
-  const handleViewModeChange = (mode: '2D' | '3D') => {
-    setViewMode(mode);
-    trackEvent('view_mode_change', 'user_action', mode);
   };
 
   const handleSignInForGeneration = async () => {
@@ -180,8 +160,8 @@ function App() {
     <>
       <SEO 
         title="Tesla Custom Wraps - AI-Powered Vehicle Wrap Design | Professional Car Wrap Generator"
-        description="Create stunning custom Tesla wraps with AI-powered design technology. Professional vehicle wrap designer with 2D and 3D preview. Design your dream Tesla wrap today."
-        keywords="tesla custom wraps, tesla wrap design, car wrap designer, vehicle wrap, AI wrap design, custom car wrap, tesla wrap generator, professional wrap design, 3D wrap preview"
+        description="Create stunning custom Tesla wraps with AI-powered design technology. Professional vehicle wrap designer with precision 2D preview. Design your dream Tesla wrap today."
+        keywords="tesla custom wraps, tesla wrap design, car wrap designer, vehicle wrap, AI wrap design, custom car wrap, tesla wrap generator, professional wrap design, 2D wrap preview"
         url="https://teslacustomwraps.top/"
       />
       <div className={`min-h-screen flex flex-col ${isDark ? 'bg-black text-zinc-100' : 'bg-white text-zinc-900'} font-light transition-colors duration-300`}>
@@ -402,32 +382,13 @@ function App() {
                   ? 'border-zinc-800 bg-black/50' 
                   : 'border-zinc-300 bg-white/80'
               }`}>
-                <div className={`flex items-center gap-2 p-1 rounded-md ${
-                  isDark ? 'bg-zinc-900/80' : 'bg-zinc-100/80'
+                <div className={`text-xs font-medium uppercase tracking-wider ${
+                  isDark ? 'text-zinc-400' : 'text-zinc-600'
                 }`}>
-                  <button 
-                    onClick={() => handleViewModeChange('2D')}
-                    className={`flex items-center gap-2 px-4 py-1.5 rounded text-xs font-medium tracking-wide transition-colors ${
-                      viewMode === '2D' 
-                        ? (isDark ? 'bg-zinc-700 text-white' : 'bg-zinc-300 text-black')
-                        : (isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-zinc-600 hover:text-black')
-                    }`}
-                  >
-                    <PhotoIcon /> {t('main.flat2D')}
-                  </button>
-                  <button 
-                    onClick={() => handleViewModeChange('3D')}
-                    className={`flex items-center gap-2 px-4 py-1.5 rounded text-xs font-medium tracking-wide transition-colors ${
-                      viewMode === '3D' 
-                        ? (isDark ? 'bg-zinc-700 text-white' : 'bg-zinc-300 text-black')
-                        : (isDark ? 'text-zinc-500 hover:text-zinc-300' : 'text-zinc-600 hover:text-black')
-                    }`}
-                  >
-                    <CubeIcon /> {t('main.model3D')}
-                  </button>
+                  {t('main.preview')}
                 </div>
 
-                {generatedImage && viewMode === '2D' && (
+                {generatedImage && (
                   <a 
                     href={generatedImage} 
                     download="wrap-design.png"
@@ -452,80 +413,59 @@ function App() {
                   }}
                 />
 
-                {viewMode === '2D' ? (
-                  <div className="w-full h-full flex items-center justify-center p-4 lg:p-8 z-10">
-                    {!originalImage && !generatedImage && (
-                      <div className={`text-center select-none px-4 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
-                        <h3 className="text-2xl font-thin tracking-wider mb-2">
-                          {uploadMode === 'select' ? t('main.previewSelectVehicleTitle') : t('main.previewNeedUploadTitle')}
-                        </h3>
-                        <p className={`text-xs max-w-md mx-auto leading-relaxed ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                          {uploadMode === 'select' ? t('main.previewSelectVehicleHint') : t('main.previewNeedUploadHint')}
-                        </p>
-                      </div>
-                    )}
+                <div className="w-full h-full flex items-center justify-center p-4 lg:p-8 z-10">
+                  {!originalImage && !generatedImage && (
+                    <div className={`text-center select-none px-4 ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>
+                      <h3 className="text-2xl font-thin tracking-wider mb-2">
+                        {uploadMode === 'select' ? t('main.previewSelectVehicleTitle') : t('main.previewNeedUploadTitle')}
+                      </h3>
+                      <p className={`text-xs max-w-md mx-auto leading-relaxed ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                        {uploadMode === 'select' ? t('main.previewSelectVehicleHint') : t('main.previewNeedUploadHint')}
+                      </p>
+                    </div>
+                  )}
 
-                    {state === AppState.GENERATING && (
-                      <div className={`absolute inset-0 z-20 backdrop-blur-sm flex flex-col items-center justify-center ${isDark ? 'bg-black/90' : 'bg-white/90'}`}>
-                        <div className={`w-12 h-12 border-2 rounded-full animate-spin mb-6 ${
-                          isDark ? 'border-zinc-800 border-t-white' : 'border-zinc-300 border-t-black'
-                        }`}></div>
-                        <p className={`text-sm tracking-[0.2em] animate-pulse uppercase ${isDark ? 'text-white' : 'text-black'}`}>
-                          {t('main.synthesizing')}
-                        </p>
-                      </div>
-                    )}
+                  {state === AppState.GENERATING && (
+                    <div className={`absolute inset-0 z-20 backdrop-blur-sm flex flex-col items-center justify-center ${isDark ? 'bg-black/90' : 'bg-white/90'}`}>
+                      <div className={`w-12 h-12 border-2 rounded-full animate-spin mb-6 ${
+                        isDark ? 'border-zinc-800 border-t-white' : 'border-zinc-300 border-t-black'
+                      }`}></div>
+                      <p className={`text-sm tracking-[0.2em] animate-pulse uppercase ${isDark ? 'text-white' : 'text-black'}`}>
+                        {t('main.synthesizing')}
+                      </p>
+                    </div>
+                  )}
 
-                    {generatedImage ? (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <img 
-                          src={generatedImage} 
-                          alt="AI-generated Tesla custom wrap design - Professional vehicle wrap with custom graphics and design" 
-                          className={`object-contain shadow-2xl ${isDark ? 'shadow-black/80' : 'shadow-zinc-800/30'}`}
-                          style={{ 
-                            maxWidth: '100%', 
-                            maxHeight: '100%',
-                            width: 'auto',
-                            height: 'auto'
-                          }}
-                        />
-                      </div>
-                    ) : originalImage ? (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <img 
-                          src={base64ToDataUrl(originalImage)} 
-                          alt="Tesla vehicle wrap template - Base template for custom wrap design" 
-                          className="object-contain opacity-40 grayscale blur-[0.5px]"
-                          style={{ 
-                            maxWidth: '100%', 
-                            maxHeight: '100%',
-                            width: 'auto',
-                            height: 'auto'
-                          }}
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  // 3D View Mode
-                  <div className="w-full h-full relative z-10">
-                    <ThreeDPreview textureUrl={generatedImage || (originalImage ? base64ToDataUrl(originalImage) : null)} />
-                    {!generatedImage && !originalImage && (
-                      <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none px-4">
-                        <div className={`backdrop-blur px-6 py-4 rounded border max-w-sm text-center ${
-                          isDark ? 'bg-black/80 border-zinc-800' : 'bg-white/80 border-zinc-300'
-                        }`}>
-                          <p className={`text-sm font-thin tracking-wider mb-1 ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                            {uploadMode === 'select' ? t('main.previewSelectVehicleTitle') : t('main.previewNeedUploadTitle')}
-                          </p>
-                          <p className={`text-xs leading-relaxed ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>
-                            {uploadMode === 'select' ? t('main.previewSelectVehicleHint') : t('main.previewNeedUploadHint')}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  {generatedImage ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <img
+                        src={generatedImage}
+                        alt="AI-generated Tesla custom wrap design - Professional vehicle wrap with custom graphics and design"
+                        className={`object-contain shadow-2xl ${isDark ? 'shadow-black/80' : 'shadow-zinc-800/30'}`}
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          width: 'auto',
+                          height: 'auto'
+                        }}
+                      />
+                    </div>
+                  ) : originalImage ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <img
+                        src={base64ToDataUrl(originalImage)}
+                        alt="Tesla vehicle wrap template - Base template for custom wrap design"
+                        className="object-contain opacity-40 grayscale blur-[0.5px]"
+                        style={{
+                          maxWidth: '100%',
+                          maxHeight: '100%',
+                          width: 'auto',
+                          height: 'auto'
+                        }}
+                      />
+                    </div>
+                  ) : null}
+                </div>
               </div>
             </div>
             

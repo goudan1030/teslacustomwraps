@@ -35,8 +35,7 @@ export const translations = {
       signInRequiredForFreeGenerations: 'Please sign in before using the 5 free generations.',
       freeGenerationsExhausted: 'Your 5 free generations have been used up.',
       // Preview
-      flat2D: '2D FLAT',
-      model3D: '3D MODEL',
+      preview: 'Preview',
       save: 'Save',
       noSignal: 'NO SIGNAL',
       awaitingTemplate: 'Awaiting template input',
@@ -47,7 +46,6 @@ export const translations = {
       loadDataToVisualize: 'Load data to visualize',
       aiGenerationPreview: 'AI Generation Preview',
       designedForProfessionalUse: 'Designed for Professional Use',
-      interactive3DView: 'Interactive 3D View',
       synthesizing: 'Synthesizing',
       // Errors
       error: 'ERROR',
@@ -72,7 +70,7 @@ export const translations = {
     // Footer
     footer: {
       brand: 'Tesla Custom Wraps',
-      description: 'AI-powered vehicle wrap designer for creating custom Tesla wraps with professional 2D and 3D preview capabilities.',
+      description: 'AI-powered vehicle wrap designer for creating custom Tesla wraps with professional 2D preview capabilities.',
       quickLinks: 'Quick Links',
       templates: 'Templates',
       teslaOfficial: 'Tesla Official',
@@ -118,8 +116,7 @@ export const translations = {
       signInRequiredForFreeGenerations: '请先登录后再使用 5 次免费生成额度。',
       freeGenerationsExhausted: '您的 5 次免费生成额度已用完。',
       // Preview
-      flat2D: '2D 平面',
-      model3D: '3D 模型',
+      preview: '预览',
       save: '保存',
       noSignal: '无信号',
       awaitingTemplate: '等待模板输入',
@@ -130,7 +127,6 @@ export const translations = {
       loadDataToVisualize: '加载数据以可视化',
       aiGenerationPreview: 'AI 生成预览',
       designedForProfessionalUse: '专为专业用途设计',
-      interactive3DView: '交互式 3D 视图',
       synthesizing: '合成中',
       // Errors
       error: '错误',
@@ -155,7 +151,7 @@ export const translations = {
     // Footer
     footer: {
       brand: 'Tesla Custom Wraps',
-      description: 'AI驱动的车辆贴膜设计工具，为Tesla车型提供专业的2D和3D预览功能。',
+      description: 'AI驱动的车辆贴膜设计工具，为Tesla车型提供专业的2D预览功能。',
       quickLinks: '快速链接',
       templates: '模板库',
       teslaOfficial: 'Tesla官网',

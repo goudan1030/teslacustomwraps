@@ -1,15 +1,12 @@
 import { base64ToDataUrl } from '../utils/image';
 import { t } from '../utils/i18n';
 
-const CHAT_GENERATE_ENDPOINT = import.meta.env.DEV
+const IMAGE_EDIT_ENDPOINT = import.meta.env.DEV
   ? '/api/generate-wrap'
   : '/.netlify/functions/generate-wrap';
-const NANO_BANANA_EDIT_ENDPOINT = import.meta.env.DEV
-  ? '/api/nano-banana-edit'
-  : '/.netlify/functions/generate-wrap?route=nano-banana-edit';
-const GPT_IMAGE_MODELS = ['gpt-image-2-all', 'gpt-image-2-vip'] as const;
-const NANO_BANANA_MODEL = 'nano-banana-2';
-const MAX_RATE_LIMIT_RETRIES = 4;
+const GPT_IMAGE_MODEL = 'gpt-image-2-all';
+const MAX_RATE_LIMIT_RETRIES = 1;
+const REQUEST_TIMEOUT_MS = 90_000;
 
 const sleep = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
@@ -54,6 +51,14 @@ const buildEditPrompt = (userPrompt: string) => `基于上传的 Tesla 贴膜模
 用户设计要求：
 ${userPrompt}`;
 
+const normalizeImageValue = (value: string): string => {
+  if (value.startsWith('data:') || /^https?:\/\//i.test(value)) {
+    return value;
+  }
+
+  return base64ToDataUrl(value);
+};
+
 const extractImageFromPayload = (data: any): string | null => {
   const imageInResponse =
     data?.imageUrl ||
@@ -63,7 +68,7 @@ const extractImageFromPayload = (data: any): string | null => {
     data?.candidates?.[0]?.content?.parts?.find((part: any) => part?.inlineData?.data)?.inlineData?.data;
 
   if (typeof imageInResponse === 'string' && imageInResponse) {
-    return imageInResponse.startsWith('data:') ? imageInResponse : base64ToDataUrl(imageInResponse);
+    return normalizeImageValue(imageInResponse);
   }
 
   const content = data?.content || data?.choices?.[0]?.message?.content;
@@ -82,57 +87,17 @@ const extractImageFromPayload = (data: any): string | null => {
 
   // Last resort: check if content itself is a base64 string
   if (content.length > 1000 && !content.includes(' ')) {
-    return content.startsWith('data:') ? content : base64ToDataUrl(content);
+    return normalizeImageValue(content);
   }
 
   return null;
 };
 
-const buildChatBody = (model: typeof GPT_IMAGE_MODELS[number], imageDataUrl: string, userPrompt: string) => ({
-  model,
-  messages: [
-    {
-      role: 'user',
-      content: [
-        {
-          type: 'text',
-          text: buildEditPrompt(userPrompt),
-        },
-        {
-          type: 'image_url',
-          image_url: {
-            url: imageDataUrl,
-          },
-        },
-      ],
-    },
-  ],
-  ...(model === 'gpt-image-2-vip' ? { size: '1024x1024' } : {}),
-});
-
-const buildNanoBananaBody = (imageBase64: string, userPrompt: string) => ({
-  contents: [
-    {
-      parts: [
-        {
-          text: buildEditPrompt(userPrompt),
-        },
-        {
-          inlineData: {
-            mimeType: 'image/png',
-            data: imageBase64,
-          },
-        },
-      ],
-    },
-  ],
-  generationConfig: {
-    responseModalities: ['IMAGE'],
-    imageConfig: {
-      aspectRatio: '1:1',
-      imageSize: '1K',
-    },
-  },
+const buildImageEditBody = (imageDataUrl: string, userPrompt: string) => ({
+  model: GPT_IMAGE_MODEL,
+  prompt: buildEditPrompt(userPrompt),
+  image: imageDataUrl,
+  response_format: 'url',
 });
 
 class ApiYiRequestError extends Error {
@@ -214,54 +179,24 @@ export const generateWrapDesign = async (
   const imageDataUrl = imageBase64.startsWith('data:')
     ? imageBase64
     : `data:image/png;base64,${imageBase64}`;
-  const base64Data = imageDataUrl.includes('base64,')
-    ? imageDataUrl.split('base64,')[1]
-    : imageDataUrl;
 
   const controller = new AbortController();
-  const timeout = window.setTimeout(() => controller.abort(), 300_000);
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
     if (import.meta.env.DEV) {
-      console.log('[chat image generation] calling:', CHAT_GENERATE_ENDPOINT);
-    }
-
-    for (const model of GPT_IMAGE_MODELS) {
-      try {
-        return await requestImage(
-          CHAT_GENERATE_ENDPOINT,
-          buildChatBody(model, imageDataUrl, userPrompt),
-          controller,
-          `chat image generation:${model}`
-        );
-      } catch (error: any) {
-        if (error?.name === 'AbortError') {
-          throw error;
-        }
-
-        if (import.meta.env.DEV) {
-          console.warn(`[chat image generation:${model}] fallback triggered:`, error);
-        }
-
-        if (!error?.temporary) {
-          throw error;
-        }
-      }
-    }
-
-    if (import.meta.env.DEV) {
-      console.log(`[${NANO_BANANA_MODEL}] calling:`, NANO_BANANA_EDIT_ENDPOINT);
+      console.log(`[image edit:${GPT_IMAGE_MODEL}] calling:`, IMAGE_EDIT_ENDPOINT);
     }
 
     return await requestImage(
-      NANO_BANANA_EDIT_ENDPOINT,
-      buildNanoBananaBody(base64Data, userPrompt),
+      IMAGE_EDIT_ENDPOINT,
+      buildImageEditBody(imageDataUrl, userPrompt),
       controller,
-      NANO_BANANA_MODEL
+      `image edit:${GPT_IMAGE_MODEL}`
     );
   } catch (error: any) {
     if (error?.name === 'AbortError') {
-      throw new Error(t('main.generationTimeout'));
+      throw new Error(`gpt-image-2 request timed out after ${Math.round(REQUEST_TIMEOUT_MS / 1000)} seconds.`);
     }
     throw error;
   } finally {

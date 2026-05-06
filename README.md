@@ -4,9 +4,9 @@
 
 # Tesla Custom Wraps
 
-一个专业的 AI 驱动车辆贴膜设计工具，默认走可配置的图像编辑 API，并支持 2D 与 3D 预览。专注于为 Tesla 车型创建定制化的贴膜设计。
+一个专业的 AI 驱动车辆贴膜设计工具，默认走可配置的图像编辑 API，并支持 2D 预览。专注于为 Tesla 车型创建定制化的贴膜设计。
 
-A professional AI-powered vehicle wrap designer with a configurable image-editing API by default, plus 2D and 3D previews.
+A professional AI-powered vehicle wrap designer with a configurable image-editing API by default, plus precision 2D previews.
 
 ## 功能特性 / Features
 
@@ -15,7 +15,6 @@ A professional AI-powered vehicle wrap designer with a configurable image-editin
 - 🌐 **中英文切换** / Chinese/English Language Toggle
 - 🔐 **Google登录** / Google OAuth Login
 - 📊 **Google Analytics集成** / Google Analytics Integration
-- 🎮 **3D交互预览** / Interactive 3D Preview
 - 📱 **响应式设计** / Responsive Design
 
 ## 本地运行 / Run Locally
@@ -40,7 +39,7 @@ Create `.env.local` (copy [`.env.example`](./.env.example) as a starting point) 
 APIYI_API_KEY=your_key_here
 
 # Optional server-side overrides
-# APIYI_BASE_URL=https://vip.apiyi.com
+# APIYI_BASE_URL=https://api.apiyi.com
 # APIYI_MODEL=gpt-image-2-all
 
 # Google Analytics Measurement ID (可选 / Optional - 已默认配置为 G-LJLJZMLN6G)
@@ -94,7 +93,7 @@ wrapgenius-ai/
 │   ├── Header.tsx      # 顶部导航栏
 │   ├── Button.tsx      # 按钮组件
 │   ├── PromptInput.tsx # 提示词输入框
-│   └── ThreeDPreview.tsx # 3D预览组件
+│   └── VehicleSelector.tsx # 车型选择组件
 ├── contexts/           # React Context
 │   ├── ThemeContext.tsx    # 主题上下文
 │   ├── LanguageContext.tsx # 语言上下文
@@ -135,7 +134,6 @@ Automatically tracks page views, user actions, and events (requires GA Measureme
 - **React 18.2.0** - UI框架
 - **TypeScript** - 类型安全
 - **Vite** - 构建工具
-- **Three.js + React Three Fiber** - 3D渲染
 - **Google Gemini API** - AI图像生成
 - **Tailwind CSS** - 样式框架
 
